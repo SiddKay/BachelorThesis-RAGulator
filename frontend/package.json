@@ -7,9 +7,14 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint:eslint": "eslint .",
+    "lint:prettier": "prettier . --check",
+    "lint": "pnpm lint:eslint && pnpm lint:prettier",
+    "lint:fix": "eslint . --fix && prettier --write --list-different ."
   },
   "dependencies": {
+    "@nuxt/eslint": "^0.6.0",
     "@radix-icons/vue": "^1.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -23,6 +28,10 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
+    "@types/eslint-config-prettier": "^6.11.3",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
     "typescript": "^5.6.3"
   }
 }

@@ -1,0 +1,7 @@
+# Ignore build output and dependencies
+node_modules
+dist
+
+pnpm-lock.yaml
+tailwind.config.js
+nuxt.config.ts
