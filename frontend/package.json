@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare",
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier . --check",
-    "lint": "npm lint:eslint && npm lint:prettier",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
     "lint:fix": "eslint . --fix && prettier --write --list-different ."
   },
   "dependencies": {
