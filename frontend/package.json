@@ -37,12 +37,17 @@
       "prettier --write"
     ]
   },
+  "overrides": {
+    "vue": "latest"
+  },
   "dependencies": {
     "@nuxt/eslint": "^0.6.0",
+    "@pinia/nuxt": "^0.5.5",
     "@radix-icons/vue": "^1.0.0",
     "@vueuse/core": "^11.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.453.0",
     "nuxt": "^3.13.0",
     "radix-vue": "^1.9.7",
     "shadcn-nuxt": "^0.10.4",

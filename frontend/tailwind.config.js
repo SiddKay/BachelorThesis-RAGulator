@@ -49,6 +49,14 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        glassBackground: 'rgba(255, 255, 255, 0.1)', // Transparent background
+        glassBorder: 'rgba(255, 255, 255, 0.2)', // Frosted border
+      },
+      backdropBlur: {
+        glass: '10px', // Custom blur value for glass effect
+      },
+      boxShadow: {
+        glass: '0 4px 30px rgba(0, 0, 0, 0.2)', // Subtle shadow
       },
       borderRadius: {
       	xl: "calc(var(--radius) + 4px)",
