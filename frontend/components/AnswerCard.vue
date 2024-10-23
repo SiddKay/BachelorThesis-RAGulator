@@ -28,8 +28,8 @@ const openAnnotationsModal = () => {
     <!-- Answer card header -->
     <CardHeader class="flex flex-row items-center justify-between space-y-0 p-2">
       <CardTitle class="text-sm font-medium">
-        <span class="text-gray-400">Answer </span>
-        <span class="text-gray-200">{{ props.answer.configVersion }}</span></CardTitle
+        <span class="text-gray-300">Answer </span>
+        <span class="text-gray-100">{{ props.answer.configVersion }}</span></CardTitle
       >
       <Button variant="link" class="h-7 w-7 p-0" @click="openAnnotationsModal">
         <MessageSquare class="h-3.5 w-3.5" />
@@ -38,7 +38,7 @@ const openAnnotationsModal = () => {
 
     <!-- Answer card content -->
     <CardContent class="p-2.5 overflow-y-auto overflow-ellipsis">
-      <p class="text text-gray-100">{{ props.answer.text }}</p>
+      <p class="text">{{ props.answer.text }}</p>
     </CardContent>
   </Card>
 </template>

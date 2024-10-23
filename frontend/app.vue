@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import MorphingGradient from "@/components/MorphingGradient.vue";
 import { useQuestionsStore } from "@/stores/questionsStore";
 import { storeToRefs } from "pinia";
 
@@ -12,13 +11,8 @@ const { questions } = storeToRefs(questionsStore);
     <!-- Morphing Gradient as background -->
     <MorphingGradient class="absolute inset-0 z-0" />
 
-    <!-- Answer Cards with Glassmorphism Effect -->
-    <AnswerCard
-      v-for="answer in questions[2].answers"
-      :key="answer.configVersion"
-      :answer="answer"
-      :questionId="questions[0].id"
-    />
+    <!-- Question Card with Answers -->
+    <QuestionCard :question="questions[0]" />
   </main>
 </template>
 
