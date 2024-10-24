@@ -6,6 +6,9 @@
   .glassmorphism {
     @apply bg-glassBackground z-10 backdrop-blur-glass border border-glassBorder shadow-glass text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_60%)];
   }
+  .glassmorphism-modal {
+    @apply bg-glassBackgroundModal backdrop-blur-glassModal border-none shadow-glass text-white [text-shadow:_0_1px_1px_rgb(0_0_0_/_30%)];
+  }
 }
 
 @layer base {

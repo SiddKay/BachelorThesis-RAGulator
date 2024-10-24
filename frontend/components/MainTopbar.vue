@@ -46,4 +46,7 @@ const toggleModal = () => {
       </Button>
     </div>
   </div>
+
+  <!-- Modal for adding questions -->
+  <AddQuestionsModal />
 </template>
