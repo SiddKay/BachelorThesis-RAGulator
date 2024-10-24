@@ -46,11 +46,11 @@ const props = withDefaults(
     mixBlendMode?: string;
   }>(),
   {
-    firstColor: "27, 0, 96",
-    secondColor: "246, 97, 88",
-    thirdColor: "100, 220, 255",
-    fourthColor: "160, 0, 102",
-    fifthColor: "76, 19, 129",
+    firstColor: "27, 0, 96", // dark blue #1b0060
+    secondColor: "246, 97, 88", // red #f66158
+    thirdColor: "77, 31, 0", // dark orange #4d1f00
+    fourthColor: "160, 0, 102", // dark pink #a00066
+    fifthColor: "76, 19, 129", // purple #4c1381
     interactiveColor: "15, 5, 159",
     interactive: true,
     size: "80%",
