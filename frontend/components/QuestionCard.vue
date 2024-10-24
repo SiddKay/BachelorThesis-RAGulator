@@ -20,8 +20,8 @@ const props = defineProps<{ question: IQuestion }>();
 
     <CardContent class="p-2 pt-1">
       <!-- Answers -->
-      <ScrollArea class="w-full overflow-x-auto rounded-2xl">
-        <div class="flex w-max space-x-4 p-1.5">
+      <ScrollArea class="w-full overflow-x-auto rounded-md">
+        <div class="flex w-max space-x-4 p-1 pb-2.5">
           <AnswerCard
             v-for="answer in props.question.answers"
             :key="answer.configVersion"
