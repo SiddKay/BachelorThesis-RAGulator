@@ -31,7 +31,11 @@ const openAnnotationsModal = () => {
         <span class="text-gray-300">Answer </span>
         <span class="text-gray-100">{{ props.answer.configVersion }}</span></CardTitle
       >
-      <Button variant="link" class="h-7 w-7 p-0" @click="openAnnotationsModal">
+      <Button
+        variant="link"
+        class="h-7 w-7 p-0 text-gray-100 hover:text-gray-300"
+        @click="openAnnotationsModal"
+      >
         <MessageSquare class="h-3.5 w-3.5" />
       </Button>
     </CardHeader>
@@ -41,4 +45,8 @@ const openAnnotationsModal = () => {
       <p class="text">{{ props.answer.text }}</p>
     </CardContent>
   </Card>
+
+  <!-- Modal for annotations -->
+  <!-- TODO: Figure out why opeing this modal completely blackens the background unlike the AddQuestionsModal -->
+  <AnnotationsModal />
 </template>

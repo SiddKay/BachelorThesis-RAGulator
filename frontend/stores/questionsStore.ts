@@ -260,6 +260,8 @@ export const useQuestionsStore = defineStore("questions", () => {
     isProcessing,
     addQuestions,
     selectAnswer,
+    selectedAnswer,
+    newComment,
     clearSelectedAnswer,
     updateScore,
     addCommentToSelectedAnswer,
