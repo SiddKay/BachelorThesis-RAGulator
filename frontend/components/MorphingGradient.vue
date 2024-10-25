@@ -47,9 +47,9 @@ const props = withDefaults(
   }>(),
   {
     firstColor: "27, 0, 96", // dark blue #1b0060
-    secondColor: "246, 97, 88", // red #f66158
-    thirdColor: "77, 31, 0", // dark orange #4d1f00
-    fourthColor: "160, 0, 102", // dark pink #a00066
+    secondColor: "94, 4, 23", // deep red #5e0417
+    thirdColor: "0, 51, 25", // dark green #003319
+    fourthColor: "92, 10, 62", // dull maroon #5c0a3e
     fifthColor: "76, 19, 129", // purple #4c1381
     interactiveColor: "15, 5, 159",
     interactive: true,
