@@ -33,7 +33,7 @@ const openAnnotationsModal = () => {
       >
       <Button
         variant="link"
-        class="h-7 w-7 p-0 text-gray-100 hover:text-gray-300"
+        class="h-7 w-7 p-0 text-gray-300 hover:text-gray-50"
         @click="openAnnotationsModal"
       >
         <MessageSquare class="h-3.5 w-3.5" />

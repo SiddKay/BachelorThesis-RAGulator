@@ -36,13 +36,13 @@ const toggleModal = () => {
       </Button>
 
       <!-- Toggle Sidebar Button -->
-      <Button size="sm" variant="link" class="pr-0" @click="toggleSidebar">
+      <Button size="sm" variant="link" class="p-0" @click="toggleSidebar">
         <PanelRightClose
           v-if="sidebarToggleStore.isOpen"
           :size="22"
-          class="text-gray-300 hover:text-gray-400"
+          class="text-gray-300 hover:text-gray-50"
         />
-        <PanelLeftClose v-else :size="22" class="text-gray-300 hover:text-gray-400" />
+        <PanelLeftClose v-else :size="22" class="text-gray-300 hover:text-gray-50" />
       </Button>
     </div>
   </div>
