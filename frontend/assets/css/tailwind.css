@@ -84,4 +84,18 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    visibility: hidden;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary-foreground) / 0.8);
+    border-radius: 4px;
+    scrollbar-width: 5px;
+  }
 }

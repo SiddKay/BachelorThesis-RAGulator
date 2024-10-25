@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-vue-next";
@@ -49,7 +48,7 @@ const deleteComment = (commentIndex: number) => {
 
 <template>
   <Dialog :open="isModalOpen" @update:open="closeAnnotationsModal">
-    <DialogContent class="glassmorphism-modal sm:max-w-[60vh] sm:max-h-[60vh] flex flex-col">
+    <DialogContent class="glassmorphism-modal sm:max-w-[35vw] max-h-[80vh] flex flex-col">
       <!-- Modal Header -->
       <DialogHeader>
         <DialogTitle>Annotations</DialogTitle>
@@ -59,53 +58,45 @@ const deleteComment = (commentIndex: number) => {
       </DialogHeader>
 
       <!-- Modal content -->
-      <div class="flex-grow flex flex-col overflow-hidden">
-        <!-- TODO: Fix the scroll Area height. If it doesn't get a fixed height value, it doesn't show the scrollbar and doesn't scroll at all-->
-        <ScrollArea
-          :class="[
-            'pr-1.5 transition-all duration-300 ease-in-out',
-            hasComments ? 'h-[25vh]' : 'h-0'
-          ]"
-        >
-          <div class="space-y-3 p-1">
-            <!-- Comment card -->
-            <div
-              v-for="(comment, index) in selectedAnswer?.comments"
-              :key="index"
-              class="glassmorphism border-none p-1.5 rounded flex justify-between items-center"
+      <div class="max-h-[30vh] overflow-hidden">
+        <div v-if="hasComments" class="space-y-4 p-1 py-2 max-h-[28vh] overflow-y-auto">
+          <!-- Comment card -->
+          <div
+            v-for="(comment, index) in selectedAnswer?.comments"
+            :key="index"
+            class="glassmorphism border-none p-1.5 rounded flex justify-between items-center"
+          >
+            <p class="text-sm text-gray-50 break-words w-[calc(100%-2.5rem)]">{{ comment }}</p>
+            <Button
+              name="delete-comment"
+              variant="link"
+              size="icon"
+              class="px-2 text-gray-300 hover:text-red-400 shrink-0"
+              @click="deleteComment(index)"
             >
-              <p class="text-sm text-gray-50 break-words w-[calc(100%-2.5rem)]">{{ comment }}</p>
-              <Button
-                name="delete-comment"
-                variant="link"
-                size="icon"
-                class="px-2 text-gray-300 hover:text-red-400 shrink-0"
-                @click="deleteComment(index)"
-              >
-                <Trash2 class="h-4 w-4" />
-              </Button>
-            </div>
+              <Trash2 class="h-4 w-4" />
+            </Button>
           </div>
-        </ScrollArea>
-
-        <Textarea
-          v-model="newComment"
-          placeholder="Add a new comment..."
-          class="mt-3 mb-1 placeholder:text-gray-400"
-        />
+        </div>
       </div>
+
+      <Textarea
+        v-model="newComment"
+        placeholder="Add a new comment..."
+        class="my-1 placeholder:text-gray-400"
+      />
 
       <!-- Modal footer -->
       <DialogFooter>
         <Button
           variant="ghost"
-          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none"
+          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] flex-shrink hover:glassmorphism hover:border-none select-none touch-none"
           @click="closeAnnotationsModal"
           >Close</Button
         >
         <Button
           variant="secondary"
-          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)] border-none"
+          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)] flex-shrink border-none select-none touch-none"
           @click="addComment"
           >Add Comment</Button
         >

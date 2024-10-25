@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus } from "lucide-vue-next";
+import { Trash2, Plus } from "lucide-vue-next";
 
 /**----------------------------- refs ----------------------------------- */
 
@@ -60,7 +60,7 @@ const handleFileUpload = (event: Event) => {
 
 <template>
   <Dialog :open="isModalOpen" @update:open="questionsModalStore.close">
-    <DialogContent class="glassmorphism-modal sm:max-w-[425px]">
+    <DialogContent class="glassmorphism-modal sm:max-w-[60vw] max-h-[80vh] flex flex-col">
       <!-- Modal Header -->
       <DialogHeader>
         <DialogTitle>Add Questions</DialogTitle>
@@ -85,12 +85,13 @@ const handleFileUpload = (event: Event) => {
         </TabsList>
 
         <!-- Manual question entry -->
-        <TabsContent value="manual">
-          <div class="space-y-4">
+        <TabsContent value="manual" class="max-h-[30vh] overflow-hidden">
+          <div class="space-y-4 py-2 max-h-[28vh] overflow-y-auto">
+            <!-- Individual Question-Answer Input -->
             <div
               v-for="(question, index) in newQuestions"
               :key="index"
-              class="flex items-center space-x-2"
+              class="flex px-1 items-center space-x-2"
             >
               <Input
                 v-model="question.text"
@@ -102,26 +103,19 @@ const handleFileUpload = (event: Event) => {
               <Button
                 variant="link"
                 size="icon"
-                class="text-gray-300 hover:text-gray-50"
+                class="text-gray-300 hover:text-red-400"
                 @click="removeNewQuestion(index)"
               >
-                <X class="h-4 w-4 p-0 m-0" />
+                <Trash2 class="h-4 w-4 p-0 m-0" />
               </Button>
             </div>
-            <Button
-              size="xs"
-              variant="ghost"
-              class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none"
-              @click="addNewQuestion"
-            >
-              <Plus class="mr-2 h-4 w-4" />Add Question</Button
-            >
           </div>
         </TabsContent>
 
         <!-- Upload questions from a CSV file -->
         <TabsContent value="upload">
           <div class="space-y-4">
+            <!-- TODO: Figure out how to change the default black color of Input button -->
             <Input type="file" accept=".csv" @change="handleFileUpload" />
             <p class="ml-0.5 text-sm text-gray-300">Upload a CSV file containing questions.</p>
           </div>
@@ -130,19 +124,32 @@ const handleFileUpload = (event: Event) => {
 
       <!-- Modal footer -->
       <DialogFooter>
-        <Button
-          variant="ghost"
-          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none"
-          @click="questionsModalStore.close"
-          >Cancel</Button
-        >
-        <Button
-          variant="secondary"
-          class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)] border-none"
-          :disabled="isProcessing"
-          @click="saveNewQuestions"
-          >Save</Button
-        >
+        <div class="flex justify-between w-full">
+          <Button
+            variant="ghost"
+            class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+            @click="addNewQuestion"
+          >
+            <Plus class="mr-2 h-4 w-4" />Add Question
+          </Button>
+          <div class="flex space-x-2">
+            <Button
+              variant="ghost"
+              class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+              @click="questionsModalStore.close"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)] border-none select-none touch-none"
+              :disabled="isProcessing"
+              @click="saveNewQuestions"
+            >
+              Save
+            </Button>
+          </div>
+        </div>
       </DialogFooter>
     </DialogContent>
   </Dialog>
