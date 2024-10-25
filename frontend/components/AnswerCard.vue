@@ -34,6 +34,7 @@ const openAnnotationsModal = () => {
       <Button
         variant="link"
         class="h-7 w-7 p-0 text-gray-300 hover:text-gray-50"
+        aria-label="Add/view annotations"
         @click="openAnnotationsModal"
       >
         <MessageSquare class="h-3.5 w-3.5" />

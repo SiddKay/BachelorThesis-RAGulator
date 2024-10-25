@@ -30,13 +30,20 @@ const toggleModal = () => {
         size="xs"
         variant="ghost"
         class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none"
+        aria-label="Add Questions"
         @click="toggleModal"
       >
         <Plus class="mr-2 h-4 w-4" />Add Questions
       </Button>
 
       <!-- Toggle Sidebar Button -->
-      <Button size="sm" variant="link" class="p-0" @click="toggleSidebar">
+      <Button
+        size="sm"
+        variant="link"
+        class="p-0"
+        aria-label="Open/close Sidebar"
+        @click="toggleSidebar"
+      >
         <PanelRightClose
           v-if="sidebarToggleStore.isOpen"
           :size="22"

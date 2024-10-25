@@ -23,7 +23,7 @@ const { parameter1, parameter2, prompt } = storeToRefs(configStore);
 </script>
 
 <template>
-  <div
+  <aside
     v-if="isSidebarOpen"
     class="m-2 ml-1 rounded-lg glassmorphism transition-all duration-300 ease-in-out overflow-hidden w-64"
   >
@@ -47,11 +47,12 @@ const { parameter1, parameter2, prompt } = storeToRefs(configStore);
         variant="ghost"
         class="w-full text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] glassmorphism border-none"
         :disabled="isProcessing"
+        aria-label="Run Chain"
         @click="questionsStore.runChain"
       >
         <Loader2 v-if="isProcessing" class="mr-2 h-4 w-4 animate-spin" />
         <span v-else>Run Chain</span>
       </Button>
     </div>
-  </div>
+  </aside>
 </template>
