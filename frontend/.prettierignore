@@ -5,4 +5,3 @@ dist
 package-lock.json
 pnpm-lock.yaml
 tailwind.config.js
-nuxt.config.ts

@@ -11,14 +11,15 @@ export default withNuxt({
   rules: {
     ...eslintConfigPrettier.rules,
     ...eslintPluginPrettierRecommended.rules,
+    // Disable certain rules
     "prettier/prettier": [
       "error",
       {
         endOfLine: "auto"
       }
     ],
-    // Disable certain rules
-    "vue/attribute-hyphenation": "off"
+    "vue/attribute-hyphenation": "off",
+    "vue/require-default-prop": "off"
   },
   files: ["*.vue", "*.ts", "*.css", "*.html"]
 });
