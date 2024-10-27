@@ -42,6 +42,16 @@ export const useQuestionsStore = defineStore("questions", () => {
     }
   };
 
+  const handleFileUpload = async (file: File) => {
+    isProcessing.value = true;
+    try {
+      await questionsService.handleFileUpload(file);
+      questions.value = await questionsService.getQuestions(); // Refresh state
+    } finally {
+      isProcessing.value = false;
+    }
+  };
+
   // TODO: put these methods in a separate annotations store
   /**
    * Updates the score of an answer by its question ID and configVersion.
@@ -114,6 +124,7 @@ export const useQuestionsStore = defineStore("questions", () => {
     isProcessing,
     fetchQuestions,
     addQuestions,
+    handleFileUpload,
     updateScore,
     runChain
   };
