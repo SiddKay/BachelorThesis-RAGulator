@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**----------------------------- Imports ----------------------------------- */
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useQuestionsStore } from "@/stores/questionsStore";
-import { useQuestionsModalStore } from "@/stores/toggleOpenStore";
+import { useQuestionsStore } from "@/stores/questions.store";
+import { useQuestionsModalStore } from "@/stores/toggleOpen.store";
 
 // Importing UI components
 import {
@@ -20,42 +20,77 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus } from "lucide-vue-next";
 
-/**----------------------------- refs ----------------------------------- */
+/**----------------------------- Setup ----------------------------------- */
+// Local state
+interface NewQuestion {
+  text: string;
+  important: boolean;
+}
 
-const newQuestions = ref([{ text: "", important: false }]);
-
-/**----------------------------- Methods ----------------------------------- */
-
-// Accessing Pinia stores
 const questionsModalStore = useQuestionsModalStore();
 const { isOpen: isModalOpen } = storeToRefs(questionsModalStore);
 
 const questionsStore = useQuestionsStore();
 const { isProcessing } = storeToRefs(questionsStore);
 
-// Methods for managing questions
+const newQuestions = ref<NewQuestion[]>([{ text: "", important: false }]);
+const uploadError = ref<string | null>(null);
+
+/**----------------------------- Methods ----------------------------------- */
 const addNewQuestion = () => {
   newQuestions.value.push({ text: "", important: false });
 };
 
 const removeNewQuestion = (index: number) => {
-  newQuestions.value.splice(index, 1);
+  if (newQuestions.value.length > 1) {
+    newQuestions.value.splice(index, 1);
+  }
 };
 
-const saveNewQuestions = () => {
+const saveNewQuestions = async () => {
   const validNewQuestions = newQuestions.value.filter((q) => q.text.trim() !== "");
-  questionsStore.addQuestions(validNewQuestions);
+
+  if (validNewQuestions.length === 0) {
+    uploadError.value = "Please enter at least one question.";
+    return;
+  }
+
+  try {
+    await questionsStore.addQuestions(validNewQuestions);
+    resetModal();
+  } catch (error) {
+    uploadError.value = "Failed to save questions. With error:" + error;
+  }
+};
+
+const resetModal = () => {
   questionsModalStore.close();
   newQuestions.value = [{ text: "", important: false }];
+  uploadError.value = null;
 };
 
 // Handle file upload
-const handleFileUpload = (event: Event) => {
+const handleFileUpload = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) {
-    questionsStore.handleFileUpload(file);
+  if (!file) return;
+
+  try {
+    uploadError.value = null;
+    if (file) {
+      await questionsStore.handleFileUpload(file);
+    }
+    resetModal();
+  } catch (error) {
+    uploadError.value = "Failed to upload file: " + error;
+  } finally {
+    (event.target as HTMLInputElement).value = "";
   }
 };
+
+// Reset questions if modal is closed without saving
+watch(isModalOpen, (isOpen) => {
+  if (!isOpen) resetModal();
+});
 </script>
 
 <template>
@@ -68,6 +103,11 @@ const handleFileUpload = (event: Event) => {
           Add new questions manually or upload a CSV file.
         </DialogDescription>
       </DialogHeader>
+
+      <!-- Error display -->
+      <div v-if="uploadError" class="text-red-400 text-sm mb-2">
+        {{ uploadError }}
+      </div>
 
       <!-- Different upload modes -->
       <Tabs default-value="manual" class="w-full">
@@ -97,6 +137,7 @@ const handleFileUpload = (event: Event) => {
                 v-model="question.text"
                 placeholder="Enter question"
                 class="flex-grow placeholder:text-gray-400"
+                :disabled="isProcessing"
               />
               <!-- <Checkbox :id="`important-${index}`" v-model="question.important" />
               <label :for="`important-${index}`">Important</label> -->
@@ -104,6 +145,7 @@ const handleFileUpload = (event: Event) => {
                 variant="link"
                 size="icon"
                 class="text-gray-300 hover:text-red-400"
+                :disabled="isProcessing || newQuestions.length === 1"
                 @click="removeNewQuestion(index)"
               >
                 <Trash2 class="h-4 w-4 p-0 m-0" />
@@ -116,7 +158,7 @@ const handleFileUpload = (event: Event) => {
         <TabsContent value="upload">
           <div class="space-y-4">
             <!-- TODO: Figure out how to change the default black color of Input button -->
-            <Input type="file" accept=".csv" @change="handleFileUpload" />
+            <Input type="file" accept=".csv" :disabled="isProcessing" @change="handleFileUpload" />
             <p class="ml-0.5 text-sm text-gray-300">Upload a CSV file containing questions.</p>
           </div>
         </TabsContent>
@@ -128,6 +170,7 @@ const handleFileUpload = (event: Event) => {
           <Button
             variant="ghost"
             class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+            :disabled="isProcessing"
             @click="addNewQuestion"
           >
             <Plus class="mr-2 h-4 w-4" />Add Question
@@ -136,6 +179,7 @@ const handleFileUpload = (event: Event) => {
             <Button
               variant="ghost"
               class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+              :disabled="isProcessing"
               @click="questionsModalStore.close"
             >
               Cancel

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**----------------------------- Imports ----------------------------------- */
 import { storeToRefs } from "pinia";
-import { useConfigStore } from "@/stores/chainConfig";
-import { useQuestionsStore } from "@/stores/questionsStore";
-import { useSidebarToggleStore } from "@/stores/toggleOpenStore";
+import { useConfigStore } from "@/stores/chainConfig.store";
+import { useQuestionsStore } from "@/stores/questions.store";
+import { useSidebarToggleStore } from "@/stores/toggleOpen.store";
 
 import Slider from "./ui/slider/Slider.vue";
 import Textarea from "./ui/textarea/Textarea.vue";
