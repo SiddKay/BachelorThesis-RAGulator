@@ -2,9 +2,10 @@
 import { useQuestionsStore } from "@/stores/questions.store";
 import { storeToRefs } from "pinia";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import LoadingIndicatorCircularVue from "./components/LoadingIndicatorCircular.vue";
 
 const questionsStore = useQuestionsStore();
-const { questions } = storeToRefs(questionsStore);
+const { questions, isProcessing } = storeToRefs(questionsStore);
 
 // Fetch questions when component mounts
 onMounted(async () => {
@@ -23,8 +24,11 @@ onMounted(async () => {
         <!-- Topbar -->
         <MainTopbar class="flex-shrink-0" />
 
+        <!-- Loading State -->
+        <LoadingIndicatorCircularVue v-if="isProcessing" />
+
         <!-- Scrollable Area for Questions -->
-        <ScrollArea class="flex-1">
+        <ScrollArea v-else class="flex-1">
           <div v-if="questions.length === 0" class="p-4 text-center text-gray-400">
             No questions available. Add some questions to get started.
           </div>
