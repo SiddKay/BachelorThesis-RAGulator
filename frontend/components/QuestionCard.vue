@@ -12,10 +12,17 @@ const props = defineProps<{ question: IQuestion }>();
 <template>
   <Card class="glassmorphism">
     <CardHeader class="p-3 pb-2">
+      <!-- Question -->
       <CardTitle class="flex items-center justify-between">
         <span class="text-md font-semibold">{{ props.question.text }}</span>
         <Star v-if="props.question.important" class="h-5 w-5 text-yellow-400" />
       </CardTitle>
+
+      <!-- TODO: Make this section scrollable and more accessible -->
+      <!-- Expected Answer -->
+      <span v-if="props.question.expectedAnswer" class="text-sm text-gray-300"
+        >Expected answer: {{ props.question.expectedAnswer }}
+      </span>
     </CardHeader>
 
     <CardContent class="p-2 pt-1">
