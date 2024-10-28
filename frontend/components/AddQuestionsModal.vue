@@ -24,6 +24,7 @@ import { Trash2, Plus } from "lucide-vue-next";
 // Local state
 interface NewQuestion {
   text: string;
+  expectedAnswer: string;
   important: boolean;
 }
 
@@ -33,12 +34,12 @@ const { isOpen: isModalOpen } = storeToRefs(questionsModalStore);
 const questionsStore = useQuestionsStore();
 const { isProcessing } = storeToRefs(questionsStore);
 
-const newQuestions = ref<NewQuestion[]>([{ text: "", important: false }]);
+const newQuestions = ref<NewQuestion[]>([{ text: "", expectedAnswer: "", important: false }]);
 const uploadError = ref<string | null>(null);
 
 /**----------------------------- Methods ----------------------------------- */
 const addNewQuestion = () => {
-  newQuestions.value.push({ text: "", important: false });
+  newQuestions.value.push({ text: "", expectedAnswer: "", important: false });
 };
 
 const removeNewQuestion = (index: number) => {
@@ -56,16 +57,16 @@ const saveNewQuestions = async () => {
   }
 
   try {
-    await questionsStore.addQuestions(validNewQuestions);
+    await questionsStore.addQAPair(validNewQuestions);
     resetModal();
   } catch (error) {
-    uploadError.value = "Failed to save questions. With error:" + error;
+    uploadError.value = "Failed to save questions. With error: " + error;
   }
 };
 
 const resetModal = () => {
   questionsModalStore.close();
-  newQuestions.value = [{ text: "", important: false }];
+  newQuestions.value = [{ text: "", expectedAnswer: "", important: false }];
   uploadError.value = null;
 };
 
@@ -131,13 +132,18 @@ watch(isModalOpen, (isOpen) => {
             <div
               v-for="(question, index) in newQuestions"
               :key="index"
-              class="flex px-1 items-center space-x-2"
+              class="flex flex-1 px-1 items-center space-x-2"
             >
               <Input
                 v-model="question.text"
                 placeholder="Enter question"
                 class="flex-grow placeholder:text-gray-400"
                 :disabled="isProcessing"
+              />
+              <Input
+                v-model="question.expectedAnswer"
+                placeholder="Enter expected answer"
+                class="flex-grow placeholder:text-gray-400"
               />
               <!-- <Checkbox :id="`important-${index}`" v-model="question.important" />
               <label :for="`important-${index}`">Important</label> -->

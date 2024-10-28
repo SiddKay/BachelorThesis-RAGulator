@@ -8,10 +8,12 @@ export default class QuestionsService extends BaseService {
   public isProcessing = false;
 
   /**
-   * Adds new questions to the existing list of questions.
+   * Adds a new QA pair (Questions + Expected Answers) to the existing list of questions.
    * @param newQuestions - Array of new question data.
    */
-  async addQuestions(newQuestions: { text: string; important: boolean }[]): Promise<void> {
+  async addQAPair(
+    newQuestions: { text: string; expectedAnswers?: string; important: boolean }[]
+  ): Promise<void> {
     try {
       // TODO: Replace with actual API call
       // Calculate the last question's ID, defaulting to 0 if there are no questions
@@ -26,7 +28,7 @@ export default class QuestionsService extends BaseService {
 
       this.questions.push(...newQuestionsWithIds);
     } catch (error) {
-      this.handleError(error, "QuestionsService.addQuestions()");
+      this.handleError(error, "QuestionsService.addQAPair()");
     }
   }
 

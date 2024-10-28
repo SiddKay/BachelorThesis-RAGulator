@@ -32,10 +32,12 @@ export const useQuestionsStore = defineStore("questions", () => {
    * @returns void
    * @throws Error if there is an issue adding the questions
    */
-  const addQuestions = async (newQuestions: { text: string; important: boolean }[]) => {
+  const addQAPair = async (
+    newQuestions: { text: string; expectedAnswers?: string; important: boolean }[]
+  ) => {
     isProcessing.value = true;
     try {
-      await questionsService.addQuestions(newQuestions);
+      await questionsService.addQAPair(newQuestions);
       questions.value = await questionsService.getQuestions(); // Refresh state
     } finally {
       isProcessing.value = false;
@@ -123,7 +125,7 @@ export const useQuestionsStore = defineStore("questions", () => {
     questions,
     isProcessing,
     fetchQuestions,
-    addQuestions,
+    addQAPair,
     handleFileUpload,
     updateScore,
     runChain

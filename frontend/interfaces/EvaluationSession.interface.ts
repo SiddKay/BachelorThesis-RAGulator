@@ -8,6 +8,7 @@
  * @property {string} text - Text of the question.
  * @property {boolean} important - Indicates whether the question is important.
  * @property {IAnswer[]} answers - Array of answers to the question.
+ * @property {string} expectedAnswer - Expected answer to the question.
  * @property {number} questionSetId - Identifier for the set of questions that the question belongs to.
  */
 interface IQuestion {
@@ -15,6 +16,7 @@ interface IQuestion {
   text: string;
   important: boolean;
   answers: IAnswer[];
+  expectedAnswer?: string;
   questionSetId?: number;
 }
 
