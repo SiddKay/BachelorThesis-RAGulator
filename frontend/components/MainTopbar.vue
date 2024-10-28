@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useQuestionsModalStore, useSidebarToggleStore } from "@/stores/toggleOpenStore";
+import { useAttrs } from "vue";
+import { useQuestionsModalStore, useSidebarToggleStore } from "@/stores/toggleOpen.store";
 import { Button } from "@/components/ui/button";
 import { Plus, PanelRightClose, PanelLeftClose } from "lucide-vue-next";
+
+const attrs = useAttrs(); // Access non-prop attributes like `class`
 
 // Accessing Pinia stores
 const questionsModalStore = useQuestionsModalStore();
@@ -19,7 +22,7 @@ const toggleModal = () => {
 </script>
 
 <template>
-  <div class="p-2 flex justify-between items-center select-none">
+  <div v-bind="attrs" class="p-2 flex justify-between items-center select-none">
     <!-- App title -->
     <h1 class="text-2xl font-bold text-gray-300">LangChain Evaluator</h1>
 

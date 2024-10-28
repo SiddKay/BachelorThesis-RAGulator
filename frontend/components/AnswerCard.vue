@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useQuestionsStore } from "@/stores/questionsStore";
-import { useAnnotationsModalStore } from "@/stores/toggleOpenStore";
+import { useAnswersStore } from "@/stores/answers.store";
+import { useAnnotationsModalStore } from "@/stores/toggleOpen.store";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -11,14 +11,15 @@ import type { IAnswer } from "@/interfaces/EvaluationSession.interface";
 const props = defineProps<{ answer: IAnswer; questionId: number }>();
 
 // Accessing Pinia stores
-const questionsStore = useQuestionsStore();
+const answersStore = useAnswersStore();
 const annotationsModalStore = useAnnotationsModalStore();
 
-// Methods
+// Computed property to check if the answer has comments
+const hasComments = computed(() => !!props.answer.comments && props.answer.comments.length > 0);
 
 // Open annotations modal
 const openAnnotationsModal = () => {
-  questionsStore.selectAnswer(props.questionId, props.answer.configVersion);
+  answersStore.selectAnswer(props.questionId, props.answer.configVersion);
   annotationsModalStore.open();
 };
 </script>
@@ -37,7 +38,7 @@ const openAnnotationsModal = () => {
         aria-label="Add/view annotations"
         @click="openAnnotationsModal"
       >
-        <MessageSquare class="h-3.5 w-3.5" />
+        <MessageSquare :class="['h-3.5 w-3.5', hasComments ? 'fill-current' : '']" />
       </Button>
     </CardHeader>
 

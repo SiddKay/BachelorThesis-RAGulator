@@ -1,10 +1,15 @@
 <script lang="ts" setup>
-import { useQuestionsStore } from "@/stores/questionsStore";
+import { useQuestionsStore } from "@/stores/questions.store";
 import { storeToRefs } from "pinia";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const questionsStore = useQuestionsStore();
 const { questions } = storeToRefs(questionsStore);
+
+// Fetch questions when component mounts
+onMounted(async () => {
+  await questionsStore.fetchQuestions();
+});
 </script>
 
 <template>
@@ -20,13 +25,12 @@ const { questions } = storeToRefs(questionsStore);
 
         <!-- Scrollable Area for Questions -->
         <ScrollArea class="flex-1">
+          <div v-if="questions.length === 0" class="p-4 text-center text-gray-400">
+            No questions available. Add some questions to get started.
+          </div>
           <div class="p-2 pr-3 space-y-4">
             <!-- Question Card -->
-            <QuestionCard
-              v-for="question in questions.slice()"
-              :key="question.id"
-              :question="question"
-            />
+            <QuestionCard v-for="question in questions" :key="question.id" :question="question" />
           </div>
         </ScrollArea>
       </main>
@@ -40,9 +44,5 @@ const { questions } = storeToRefs(questionsStore);
 <style scoped>
 .bg-fixed {
   position: fixed;
-  /* top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0; */
 }
 </style>

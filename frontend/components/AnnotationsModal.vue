@@ -2,8 +2,9 @@
 /**----------------------------- Imports ----------------------------------- */
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { useQuestionsStore } from "@/stores/questionsStore";
-import { useAnnotationsModalStore } from "@/stores/toggleOpenStore";
+import { useAnswersStore } from "~/stores/answers.store";
+import { useAnnotationsStore } from "@/stores/annotations.store";
+import { useAnnotationsModalStore } from "@/stores/toggleOpen.store";
 
 // Importing UI components
 import {
@@ -18,31 +19,36 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-vue-next";
 
+const newComment = ref<string>("");
+
 /**----------------------------- Methods ----------------------------------- */
 
 // Accessing Pinia stores
 const annotationsModalStore = useAnnotationsModalStore();
 const { isOpen: isModalOpen } = storeToRefs(annotationsModalStore);
 
-const questionsStore = useQuestionsStore();
-// TODO: Fix the way to add comments to the selected answer. Do it locally and then push to the store
-const { selectedAnswer, newComment } = storeToRefs(questionsStore);
+const answersStore = useAnswersStore();
+const { selectedAnswer } = storeToRefs(answersStore);
+
+const annotationsStore = useAnnotationsStore();
 
 // TODO: Computed property to check if there are any comments in the selected answer
 const hasComments = computed(() => (selectedAnswer.value?.comments?.length ?? 0) > 0);
 
 const closeAnnotationsModal = () => {
   annotationsModalStore.close();
-  questionsStore.clearSelectedAnswer();
+  answersStore.clearSelectedAnswer();
+  newComment.value = "";
 };
 
 // Methods for managing comments
 const addComment = () => {
-  questionsStore.addCommentToSelectedAnswer();
+  annotationsStore.addComment(newComment.value);
+  newComment.value = "";
 };
 
 const deleteComment = (commentIndex: number) => {
-  questionsStore.deleteCommentFromSelectedAnswer(commentIndex);
+  annotationsStore.deleteComment(commentIndex);
 };
 </script>
 
