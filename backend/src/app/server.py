@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 
+from ..routes import extract_chain_config
+
 from ..chains.simple_chain import chain
 
 app = FastAPI(
@@ -19,6 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+app.include_router(extract_chain_config.router)
 
 
 add_routes(app, chain, path="/simple_chain")
