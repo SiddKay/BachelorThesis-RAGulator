@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from langserve import add_routes
+
+from ..routes import extract_chain_config
+
+from ..chains.config_chain import test_chain
 
 app = FastAPI(
     title="Sample App to test LangServe",
@@ -17,7 +22,7 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+app.include_router(extract_chain_config.router)
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+
+add_routes(app, test_chain, path="/configurable_params")
