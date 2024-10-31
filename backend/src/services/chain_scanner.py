@@ -1,7 +1,7 @@
 from pathlib import Path
 import importlib.util
 import inspect
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 from dataclasses import dataclass
 import logging
 from langchain.chains import LLMChain
@@ -13,7 +13,6 @@ from langchain.prompts import (
 from langchain_core.runnables import (
     RunnableSequence,
     ConfigurableField,
-    RunnablePassthrough,
 )
 
 
@@ -23,6 +22,7 @@ class ModelParameter:
     type: str
     default: Any
     required: bool = False
+    configurable: bool = False
 
 
 @dataclass
@@ -67,11 +67,55 @@ class ChainScanner:
             self.logger.error(f"Error loading module {file_path}: {str(e)}")
             return None
 
+    def extract_model_from_runnable(self, runnable: RunnableSequence) -> Any:
+        """Extract the model from a RunnableSequence."""
+        try:
+            # Traverse the runnable steps to find the model
+            for step in runnable.steps:
+                # If step is the model directly
+                if hasattr(step, "model_name"):
+                    return step
+                # If step is ConfigurableField containing the model
+                if isinstance(step, ConfigurableField):
+                    if hasattr(step.default, "model_name"):
+                        return step.default
+            return None
+        except Exception as e:
+            self.logger.error(
+                f"Error extracting model from runnable: {str(e)}"
+            )
+            return None
+
+    def extract_prompt_from_runnable(
+        self, runnable: RunnableSequence
+    ) -> Optional[BasePromptTemplate]:
+        """Extract the prompt from a RunnableSequence."""
+        try:
+            # Traverse the runnable steps to find the prompt
+            for step in runnable.steps:
+                if isinstance(step, (PromptTemplate, ChatPromptTemplate)):
+                    return step
+                if isinstance(step, ConfigurableField):
+                    if isinstance(
+                        step.default, (PromptTemplate, ChatPromptTemplate)
+                    ):
+                        return step.default
+            return None
+        except Exception as e:
+            self.logger.error(
+                f"Error extracting prompt from runnable: {str(e)}"
+            )
+            return None
+
     def extract_model_parameters(
         self, model_instance: Any
     ) -> List[ModelParameter]:
         """Extract configurable parameters from a LangChain model instance."""
         parameters = []
+
+        # Handle ConfigurableField wrapper
+        if isinstance(model_instance, ConfigurableField):
+            model_instance = model_instance.default
 
         # Get the signature of the model's constructor
         signature = inspect.signature(model_instance.__class__)
@@ -85,12 +129,21 @@ class ChainScanner:
                 if param.annotation != inspect.Parameter.empty
                 else "Any"
             )
+
             default_value = (
                 param.default
                 if param.default != inspect.Parameter.empty
                 else None
             )
+
             required = param.default == inspect.Parameter.empty
+
+            # Check if this parameter is marked as configurable
+            configurable = False
+            if hasattr(model_instance, "_configurable_fields"):
+                configurable = (
+                    param_name in model_instance._configurable_fields
+                )
 
             parameters.append(
                 ModelParameter(
@@ -98,6 +151,7 @@ class ChainScanner:
                     type=param_type,
                     default=default_value,
                     required=required,
+                    configurable=configurable,
                 )
             )
 
@@ -106,13 +160,19 @@ class ChainScanner:
     def extract_prompt_info(self, module: Any) -> Optional[PromptInfo]:
         """Extract prompt information from the module."""
         try:
-            # First try to find prompt directly
-            prompt = getattr(module, "prompt", None)
+            prompt = None
 
-            # If no direct prompt, try to get it from chain
-            if prompt is None and hasattr(module, "chain"):
-                if isinstance(module.chain, LLMChain):
-                    prompt = module.chain.prompt
+            # First try to get prompt directly from module
+            if hasattr(module, "prompt"):
+                prompt = module.prompt
+
+            # If no direct prompt and chain exists, try to extract from chain
+            elif hasattr(module, "chain"):
+                chain = module.chain
+                if isinstance(chain, LLMChain):
+                    prompt = chain.prompt
+                elif isinstance(chain, RunnableSequence):
+                    prompt = self.extract_prompt_from_runnable(chain)
 
             if prompt is None:
                 return None
@@ -160,18 +220,32 @@ class ChainScanner:
             try:
                 module = self.load_module(file_path)
 
-                # TODO: Check if this if condition is sufficient for prompt info extraction as well
-                if module and hasattr(module, "model"):
-                    model_params = self.extract_model_parameters(module.model)
-                    prompt_info = self.extract_prompt_info(module)
+                if module:
+                    model_instance = None
 
-                    configs.append(
-                        ChainConfig(
-                            chain_name=file_path.stem,
-                            model_parameters=model_params,
-                            prompt_info=prompt_info,
+                    # Try to get model directly
+                    if hasattr(module, "model"):
+                        model_instance = module.model
+                    # If no direct model but chain exists, try to extract from chain
+                    elif hasattr(module, "chain"):
+                        if isinstance(module.chain, RunnableSequence):
+                            model_instance = self.extract_model_from_runnable(
+                                module.chain
+                            )
+
+                    if model_instance:
+                        model_params = self.extract_model_parameters(
+                            model_instance
                         )
-                    )
+                        prompt_info = self.extract_prompt_info(module)
+
+                        configs.append(
+                            ChainConfig(
+                                chain_name=file_path.stem,
+                                model_parameters=model_params,
+                                prompt_info=prompt_info,
+                            )
+                        )
             except Exception as e:
                 self.logger.error(
                     f"Error processing chain {file_path}: {str(e)}"
