@@ -1,0 +1,51 @@
+################
+### FRONTEND ###
+################
+
+## Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+## Node dependencies
+node_modules
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+## Logs
+logs
+*.log
+
+## Misc
+.DS_Store
+.fleet
+.idea
+.vscode/
+TODOS.md
+GUIDE.md
+
+###############
+### BACKEND ###
+###############
+
+__pycache__/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+.venv
+venv/
+
+
+#######################
+### Local Env files ###
+#######################
+env/
+.env
+.env.*
+!.env.example
