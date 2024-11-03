@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from langserve import add_routes
+
+from ..chains.simple_chain import chain
 
 app = FastAPI(
     title="Sample App to test LangServe",
     version="0.0.1",
-    description="Spin up a simple API server using Langchain's Runnable interfaces",
+    description="This app acts as a server for LangServe",
 )
 
 # Set all CORS enabled origins
@@ -18,6 +21,4 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+add_routes(app, chain, path="/simple_chain")
