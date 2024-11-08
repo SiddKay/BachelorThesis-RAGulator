@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 
-from ..chains.simple_chain import chain
+from src.routes.chain_config_routes import router as chain_params_router
+
+from src.chains.simple_chain import chain
 
 app = FastAPI(
     title="Sample App to test LangServe",
@@ -20,5 +22,6 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+app.include_router(chain_params_router, prefix="/api")
 
 add_routes(app, chain, path="/simple_chain")
