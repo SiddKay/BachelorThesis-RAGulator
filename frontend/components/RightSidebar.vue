@@ -23,10 +23,7 @@ const { parameter1, parameter2, prompt } = storeToRefs(configStore);
 </script>
 
 <template>
-  <aside
-    v-if="isSidebarOpen"
-    class="m-2 ml-1 rounded-lg glassmorphism transition-all duration-300 ease-in-out overflow-hidden w-64"
-  >
+  <aside v-if="isSidebarOpen" class="m-1 rounded-xl glassmorphism overflow-hidden w-64">
     <div class="p-2 pt-3 shadow flex justify-between items-center select-none">
       <h2 class="text-lg font-semibold text-gray-300">Chain Config</h2>
     </div>

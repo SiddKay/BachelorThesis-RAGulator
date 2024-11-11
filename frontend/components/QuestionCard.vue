@@ -4,7 +4,6 @@ import AnswerCard from "./AnswerCard.vue";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Star } from "lucide-vue-next";
 
 const props = defineProps<{ question: IQuestion }>();
 </script>
@@ -15,7 +14,6 @@ const props = defineProps<{ question: IQuestion }>();
       <!-- Question -->
       <CardTitle class="flex items-center justify-between">
         <span class="text-md font-semibold">{{ props.question.text }}</span>
-        <Star v-if="props.question.important" class="h-5 w-5 text-yellow-400" />
       </CardTitle>
 
       <!-- TODO: Make this section scrollable and more accessible -->
