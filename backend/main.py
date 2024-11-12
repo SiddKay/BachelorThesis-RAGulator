@@ -1,15 +1,17 @@
 import uvicorn
-from app.services.logger import LoggingManager, get_logger
+import os
+
+from app.core.logger import setup_logging, get_logger
 
 # from app.server import app
 
-logger = get_logger("ragulator_logger")
+os.system("color")
 
 
 def main():
     # Setup logging
-    logging_manager = LoggingManager()
-    logging_manager.setup()
+    setup_logging(log_file="logs/ragulator.log.jsonl")
+    logger = get_logger(__name__)
 
     # Basic code to test logging
     logger.debug("debug message")
@@ -17,11 +19,11 @@ def main():
     logger.warning("warning message")
     logger.error("error message")
     logger.critical("critical message")
+    logger.info("Starting Uvicorn server...")
     try:
         1 / 0
     except ZeroDivisionError:
         logger.exception("exception message")
-    logger.info("Starting Uvicorn server...")
 
 
 if __name__ == "__main__":
