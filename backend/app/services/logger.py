@@ -30,7 +30,7 @@ class LoggingManager:
         self.config_path = (
             pathlib.Path(config_path)
             if config_path
-            else self.backend_dir / "src" / "configs" / "logging_config.json"
+            else self.backend_dir / "app" / "configs" / "logging_config.json"
         )
         self.logs_dir = (
             pathlib.Path(logs_dir) if logs_dir else self.backend_dir / "logs"

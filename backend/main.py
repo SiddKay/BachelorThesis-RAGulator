@@ -1,7 +1,7 @@
-# import uvicorn
-from services.logger import LoggingManager, get_logger
+import uvicorn
+from app.services.logger import LoggingManager, get_logger
 
-# from .app.server import app
+# from app.server import app
 
 logger = get_logger("ragulator_logger")
 
