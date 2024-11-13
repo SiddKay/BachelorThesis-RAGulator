@@ -1,0 +1,22 @@
+services:
+  db:
+    container_name: postgres-db-ragulator
+    image: postgres:17-alpine
+    restart: always
+    ports:
+      - "5433:5432" # Adjust the port to avoid conflicts with other services
+    expose:
+      - "5433"
+    env_file:
+      - ./.env
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+
+  # Adminer is deprecated but still functional, you can use pgAdmin instead
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+name: ragulator_database
