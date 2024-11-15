@@ -14,8 +14,9 @@ These instructions will help you set up and run the backend server seperately.
 
 Before you begin, make sure you have the following installed:
 
-- `Python 3.12.x`
-- `pip (Python package installer)`
+- [Python 3.12.x](https://www.python.org/downloads/)
+- [pip](https://pip.pypa.io/en/stable/installation/) (Usually comes with python installation)
+- [Docker Desktop](https://docs.docker.com/engine/install/) (Recommended)
 
 ### Installation
 
@@ -29,14 +30,13 @@ Before you begin, make sure you have the following installed:
 
    ```bash
    python -m venv .venv
-   source .venv/bin/activate
-   ```
 
-   > For Windows users, the command to activate the virtual environment is:
-   >
-   > ```bash
-   > .venv/Scripts/activate
-   > ```
+   # Activate the virtual environment (Linux/MacOS)
+   source .venv/bin/activate
+
+   # Activate the virtual environment (Windows)
+   .venv/Scripts/activate
+   ```
 
 3. Install all the necessary dependencies:
 
@@ -44,20 +44,40 @@ Before you begin, make sure you have the following installed:
    pip install -r requirements.txt
    ```
 
-4. Set up your environment variables:
+4. Run the following command to set up your environment variables:
 
-   - Create a `.env` file in the **backend** directory, which contains the relevant environment variables.
-   - The example content for the `.env` file can be found in the `.env.example` file.
+   ```bash
+   cp .env.example .env
+   ```
+
+   > This will create a `.env` file from the sample `.env.example` file.
+   > You should modify the values in the `.env` file as needed.
+
+5. Start docker desktop and run the following command to setup the database:
+
+   ```bash
+   docker-compose up -d
+   ```
 
 ### Starting the Server
 
 To start a local server, run the following command in the **backend** directory:
 
 ```bash
-uvicorn src.main:app --reload
+uvicorn main:app --reload
 ```
 
 Check the terminal for the relevant endpoints and to see where the server is running _(most likely at [http://127.0.0.1:8000](http://127.0.0.1:8000))_.
+
+## Database admin panel
+
+Since we are using `PostgreSQL` as our database, we can use `adminer` to manage the database. To access the admin panel, visit [http://localhost:8080](http://localhost:8080) in your browser. Use the following credentials to login:
+
+- **System**: `PostgreSQL`
+- **Server**: `db`
+- **Username**: `postgres`
+- **Password**: `postgres`
+- **Database**: `ragulator`
 
 ## API Testing
 
