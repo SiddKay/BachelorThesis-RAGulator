@@ -4,10 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 # from langserve import add_routes
 from contextlib import asynccontextmanager
 from app.db.config import async_engine
-from app.models.models import Base
-from app.api.endpoints import router
+from app.api.v1.endpoints import api_router
+from app.models import Base
 
-from app.core.logger import get_logger
+from app.core.logger import setup_logging, get_logger
 
 # from chains.simple_chain import chain
 
@@ -17,12 +17,10 @@ logger = get_logger("ragulator_logger")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Manages application lifecycle events.
+    """Manages application lifecycle events."""
 
-    Args:
-        app: FastAPI application instance
-    """
+    # Setup logging
+    setup_logging(log_file="logs/ragulator_log")
 
     logger.info("Starting database initialization...")
     try:
@@ -32,8 +30,6 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
             app.state.db = conn
             logger.info("Database initialization completed")
-
-        logger.info("Application startup completed")
         yield
 
     except Exception as e:
@@ -70,7 +66,7 @@ def create_app() -> FastAPI:
     )
 
     # Add routes
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(api_router, prefix="/v1")
 
     return app
 
