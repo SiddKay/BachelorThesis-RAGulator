@@ -41,8 +41,13 @@ class ConsoleFormatter(logging.Formatter):
 class JsonFormatter(logging.Formatter):
     """JSON formatter for file logging."""
 
+    def __init__(self):
+        super().__init__()
+        self.default_msec_format = "%s.%03d"
+
     @override
     def format(self, record: logging.LogRecord) -> str:
+        """Format log record as JSON with additional context."""
         log_data = {
             "level": record.levelname,
             "module": record.module,
@@ -54,7 +59,12 @@ class JsonFormatter(logging.Formatter):
             ).isoformat(),
             "thread_name": record.threadName,
             "logger": record.name,
+            "process": record.process,
         }
+
+        # Add extra fields if they exist
+        if hasattr(record, "extra"):
+            log_data.update(record.extra)
 
         if record.exc_info:
             log_data["exc_info"] = self.formatException(record.exc_info)
@@ -68,22 +78,26 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_logging(
-    level: int = logging.DEBUG, log_file: Optional[str | Path] = None
+    level: int = logging.INFO,
+    log_file: Optional[str | Path] = None,
+    log_format: Optional[str] = None,
 ) -> None:
     """Initialize logging with console and optional file output.
 
     Args:
         level: Minimum logging level
         log_file: Optional path to log file
+        log_format: Optional log format string
     """
     handlers: list[logging.Handler] = []
 
     # Console handler
     console = logging.StreamHandler(sys.stdout)
-    console.setLevel(logging.INFO)
+    console.setLevel(level)
     console.setFormatter(
         ConsoleFormatter(
-            "%(levelname)s @ %(module)s:%(funcName)s:%(lineno)d - %(message)s"
+            log_format
+            or "%(levelname)s @ [%(module)s:%(funcName)s:%(lineno)d] - %(message)s"
         )
     )
     handlers.append(console)
@@ -96,10 +110,11 @@ def setup_logging(
         file_handler = logging.handlers.RotatingFileHandler(
             filename=log_path,
             maxBytes=512 * 1024,  # 512KB
-            backupCount=3,
+            backupCount=5,
             encoding="utf8",
         )
         file_handler.setFormatter(JsonFormatter())
+        file_handler.setLevel(logging.DEBUG)
         handlers.append(file_handler)
 
     # Configure root logger

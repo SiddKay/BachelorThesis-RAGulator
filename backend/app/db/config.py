@@ -26,8 +26,8 @@ PG_DATABASE_URL = (
 async_engine = create_async_engine(
     PG_DATABASE_URL,
     echo=True,  # TODO: Set to False to disable SQL query logging overhead
-    pool_size=10,  # Increased for better concurrency
-    max_overflow=20,  # Double pool_size for burst handling
+    pool_size=32,  # Increased for better concurrency
+    max_overflow=64,  # Double pool_size for burst handling
     pool_timeout=10,  # Faster timeout for local development
     pool_recycle=300,  # 5 minutes - Docker containers are ephemeral
     pool_pre_ping=True,  # Verify connections before use

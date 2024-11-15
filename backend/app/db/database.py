@@ -8,13 +8,13 @@ logger = get_logger(__name__)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for getting async database session."""
 
     start_time = perf_counter()
     session_id = id(AsyncSessionLocal)
 
-    logger.debug(f"Creating database session [id={session_id}]")
-
     async with AsyncSessionLocal() as session:
+        logger.debug(f"Creating new database session [id={session_id}]")
         try:
             yield session
             elapsed = perf_counter() - start_time
@@ -22,12 +22,11 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
                 f"Session completed successfully: [id={session_id}], "
                 f"duration={elapsed:.3f}s"
             )
-
         except Exception as e:
             await session.rollback()
             elapsed = perf_counter() - start_time
             logger.error(
-                f"Session failed [id={session_id}] duration={elapsed:.3f}s "
+                f"Session [id={session_id}] failed duration={elapsed:.3f}s, "
                 f"error={str(e)}",
                 exc_info=True,
             )
