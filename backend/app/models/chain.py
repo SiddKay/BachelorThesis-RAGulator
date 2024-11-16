@@ -16,7 +16,7 @@ class Chain(BaseModel):
     session_id: Mapped[UUID] = mapped_column(
         ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False
     )
-    file_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(512), nullable=False)
 
     # Relationships
     session: Mapped["Session"] = relationship(back_populates="chains")

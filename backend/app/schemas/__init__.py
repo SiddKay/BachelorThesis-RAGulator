@@ -6,7 +6,7 @@ from app.schemas.session import (
     SessionUpdate,
     SessionDetail,
 )
-from app.schemas.chain import Chain, ChainBase, ChainCreate
+from app.schemas.chain import Chain, ChainBase, AvailableChain, ChainSelection
 from app.schemas.question import (
     Question,
     QuestionBase,
@@ -42,7 +42,8 @@ __all__ = [
     # Chain schemas
     "Chain",
     "ChainBase",
-    "ChainCreate",
+    "AvailableChain",
+    "ChainSelection",
     # Question schemas
     "Question",
     "QuestionBase",
