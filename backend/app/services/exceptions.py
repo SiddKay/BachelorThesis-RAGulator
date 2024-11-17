@@ -41,3 +41,22 @@ class ConfigurationNotFoundError(ConfigurationError):
     """Raised when configuration is not found"""
 
     pass
+
+
+# QuestionsAPI
+class QuestionError(Exception):
+    """Base exception for question service errors"""
+
+    pass
+
+
+class QuestionNotFoundError(QuestionError):
+    """Raised when question is not found"""
+
+    pass
+
+
+class SessionNotFoundError(QuestionError):
+    """Raised when session is not found"""
+
+    pass

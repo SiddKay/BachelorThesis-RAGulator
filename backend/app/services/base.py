@@ -1,10 +1,9 @@
-# app/services/base.py
 from uuid import UUID
 from time import perf_counter
 from sqlalchemy import select, asc, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import TypeVar, Generic, Optional, List, Type, Any
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import TypeVar, Generic, Optional, List, Type, Any, Sequence
 from app.models.base import BaseModel
 from app.core.logger import get_logger
 
@@ -21,26 +20,28 @@ class BaseService(Generic[ModelType]):
         self.db = db
 
     async def create(self, *, obj_data: dict[str, Any]) -> ModelType:
-        """Create a new object."""
+        """Create a single object."""
+        return (await self.create_bulk(objects_data=[obj_data]))[0]
+
+    async def create_bulk(
+        self, *, objects_data: List[dict[str, Any]]
+    ) -> List[ModelType]:
+        """Create multiple objects in a single transaction."""
         start_time = perf_counter()
-        db_obj = self.model(**obj_data)
-        self.db.add(db_obj)
+        db_objects = [self.model(**data) for data in objects_data]
+        self.db.add_all(db_objects)
 
         try:
             await self.db.commit()
-
-            # Logging the time taken to create the object
             elapsed = perf_counter() - start_time
             logger.info(
-                f"Created `{self.model.__name__}` in {elapsed:.3f}s",
+                f"Bulk created {len(db_objects)} `{self.model.__name__}` in {elapsed:.3f}s"
             )
-
-            return db_obj
+            return db_objects
         except SQLAlchemyError as e:
             await self.db.rollback()
-
             logger.error(
-                f"Failed to create {self.model.__name__}: {str(e)}",
+                f"Failed to bulk create {self.model.__name__}: {str(e)}",
                 exc_info=True,
             )
             raise
@@ -58,7 +59,6 @@ class BaseService(Generic[ModelType]):
         try:
             try:
                 sort_column = getattr(self.model, order_by)
-                logger.info(f"Sorting the column by order '{sort_column}'.")
             except AttributeError:
                 logger.warning(
                     f"Invalid sort column '{order_by}', falling back to 'created_at'"
@@ -128,23 +128,29 @@ class BaseService(Generic[ModelType]):
             )
             raise
 
-    async def delete(self, *, db_obj: ModelType) -> None:
-        """Delete an object by ID."""
+    async def delete(self, *, db_obj: ModelType) -> ModelType:
+        """Delete a single object."""
+        return (await self.delete_bulk(db_objects=[db_obj]))[0]
+
+    async def delete_bulk(
+        self, *, db_objects: Sequence[ModelType]
+    ) -> List[ModelType]:
+        """Delete multiple objects in a single transaction."""
         start_time = perf_counter()
         try:
-            await self.db.delete(db_obj)
+            for obj in db_objects:
+                await self.db.delete(obj)
             await self.db.commit()
 
-            # Logging the time taken to delete the object
             elapsed = perf_counter() - start_time
             logger.warning(
-                f"Deleted `{self.model.__name__}` in {elapsed:.3f}s",
+                f"Bulk deleted {len(db_objects)} `{self.model.__name__}` in {elapsed:.3f}s",
             )
-
+            return list(db_objects)
         except SQLAlchemyError as e:
             await self.db.rollback()
             logger.error(
-                f"Failed to delete {self.model.__name__}: {str(e)}",
+                f"Failed to bulk delete {self.model.__name__}: {str(e)}",
                 exc_info=True,
             )
             raise
