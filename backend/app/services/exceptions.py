@@ -60,3 +60,34 @@ class SessionNotFoundError(QuestionError):
     """Raised when session is not found"""
 
     pass
+
+
+# AnswersAPI
+class AnswerError(Exception):
+    """Base exception for answer service errors"""
+
+    pass
+
+
+class AnswerNotFoundError(AnswerError):
+    """Raised when answer is not found"""
+
+    pass
+
+
+class ChainNotFoundError(AnswerError):
+    """Raised when chain is not found"""
+
+    pass
+
+
+class ConfigurationNotFoundError(AnswerError):
+    """Raised when configuration is not found"""
+
+    pass
+
+
+class QuestionNotFoundError(AnswerError):
+    """Raised when question is not found"""
+
+    pass
