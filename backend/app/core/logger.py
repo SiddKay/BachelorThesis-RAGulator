@@ -10,32 +10,42 @@ from typing import Optional, override
 # ==================== #
 
 
-class ConsoleFormatter(logging.Formatter):
-    """Simple console formatter with colors."""
+class VSCodeFormatter(logging.Formatter):
+    """Custom formatter with colorized level names, that creates clickable file links in VS Code terminal."""
 
     COLORS = {
-        logging.INFO: "\033[92m",  # green
+        logging.INFO: "\033[94m",  # blue
         logging.WARNING: "\033[93m",  # yellow
         logging.ERROR: "\033[91m",  # red
         logging.CRITICAL: "\033[95m",  # pink
     }
-    BLUE = "\033[94m"  # for exceptions
+    DARK_GRAY = "\033[90m"
     RESET = "\033[0m"
 
     @override
     def format(self, record: logging.LogRecord) -> str:
-        # Create a copy of the record to avoid modifying the original
-        record_copy = logging.makeLogRecord(record.__dict__)
+        """
+        Format a log record with a colorized level name and a clickable file link
+        to the source file in VS Code format. INFO level logs are specifically
+        colored blue to distinguish them from other processes (e.g., Uvicorn's
+        INFO logs are green).
+        """
 
-        # Choose blue for exceptions, otherwise use level color
-        if record_copy.exc_info:
-            color = self.BLUE
-        else:
-            color = self.COLORS.get(record_copy.levelno, "")
+        # Colorize the level name
+        color = self.COLORS.get(record.levelno, "")
+        levelname_colorised = f"{color}{record.levelname}{self.RESET}"
 
-        record_copy.levelname = f"{color}{record_copy.levelname}{self.RESET}"
+        # Get the full file path
+        file_path = Path(record.pathname).resolve()
 
-        return super().format(record_copy)
+        # Create VS Code clickable link format: file:line:column with surrounding gray color
+        file_link = f"{file_path}:{record.lineno}:1"
+        file_info = f"{self.DARK_GRAY}{file_link} [{record.module}:{record.funcName}]{self.RESET}"
+
+        # Final format
+        return (
+            f"{levelname_colorised}:     {file_info} - {record.getMessage()}"
+        )
 
 
 class JsonFormatter(logging.Formatter):
@@ -80,7 +90,6 @@ class JsonFormatter(logging.Formatter):
 def setup_logging(
     level: int = logging.INFO,
     log_file: Optional[str | Path] = None,
-    log_format: Optional[str] = None,
 ) -> None:
     """Initialize logging with console and optional file output."""
     # Clear existing handlers
@@ -94,12 +103,7 @@ def setup_logging(
     # Console handler
     console = logging.StreamHandler(sys.stdout)
     console.setLevel(level)
-    console.setFormatter(
-        ConsoleFormatter(
-            log_format
-            or "%(levelname)s @ [%(module)s:%(funcName)s:%(lineno)d] - %(message)s"
-        )
-    )
+    console.setFormatter(VSCodeFormatter())
     handlers.append(console)
 
     # File handler

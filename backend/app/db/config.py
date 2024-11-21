@@ -25,7 +25,7 @@ PG_DATABASE_URL = (
 # SQLAlchemy engine configuration
 async_engine = create_async_engine(
     PG_DATABASE_URL,
-    echo=True,  # TODO: Set to False to disable SQL query logging overhead
+    echo=False,  # TODO: Set to False to disable SQL query logging overhead
     pool_size=32,  # Increased for better concurrency
     max_overflow=64,  # Double pool_size for burst handling
     pool_timeout=10,  # Faster timeout for local development
