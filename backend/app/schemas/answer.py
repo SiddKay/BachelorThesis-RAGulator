@@ -6,6 +6,7 @@ from app.schemas.answer_comment import AnswerComment
 
 
 class AnswerBase(BaseSchema):
+    question_id: UUID
     chain_id: UUID
     configuration_id: UUID
     generated_answer: str

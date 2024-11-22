@@ -177,7 +177,7 @@ async def get_session_questions(
 
 @router.patch(
     "/questions/{question_id}",
-    response_model=QuestionSchema,
+    response_model=QuestionDetail,
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Question updated successfully"},
@@ -191,7 +191,7 @@ async def update_question(
     question_id: UUID,
     question_update: QuestionUpdate,
     service: QuestionService = Depends(get_question_service),
-) -> QuestionSchema:
+) -> QuestionDetail:
     """Update a specific question."""
     try:
         question = await service.update_question(
@@ -199,7 +199,7 @@ async def update_question(
             question_id=question_id,
             data=question_update,
         )
-        return QuestionSchema.model_validate(question)
+        return QuestionDetail.model_validate(question)
     except (SessionNotFoundError, QuestionNotFoundError) as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)

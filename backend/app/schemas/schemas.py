@@ -76,6 +76,7 @@ class AnswerComment(AnswerCommentBase, TimeStampSchema, IdSchema):
 
 # Answers API
 class AnswerBase(BaseSchema):
+    question_id: UUID
     chain_id: UUID
     configuration_id: UUID
     generated_answer: str
