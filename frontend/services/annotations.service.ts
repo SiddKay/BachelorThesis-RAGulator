@@ -1,18 +1,22 @@
-import type { IAnswer } from "@/interfaces/EvaluationSession.interface";
+import type { IAnswer, IAnswerComment } from "~/types/models2";
 import { BaseService } from "./base.service";
 
 export default class AnnotationsService extends BaseService {
   /**
    * Adds a comment to a specified answer.
    * @param answer - The answer to which the comment is added.
-   * @param comment - The comment to add.
+   * @param commentText - The comment to add.
    */
-  async addComment(answer: IAnswer, comment: string): Promise<void> {
+  async addComment(answer: IAnswer, commentText: string): Promise<void> {
     try {
       if (!Array.isArray(answer.comments)) {
         answer.comments = [];
       }
-      answer.comments.push(comment);
+      const newComment: IAnswerComment = {
+        answer_id: answer.id,
+        comment_text: commentText
+      };
+      answer.comments.push(newComment);
     } catch (error) {
       this.handleError(error, "addComment");
     }

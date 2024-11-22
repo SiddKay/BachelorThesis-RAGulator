@@ -1,59 +1,79 @@
 import { defineStore } from "pinia";
-import AnswersService from "@/services/answers.service";
-import { useQuestionsStore } from "./questions.store";
-import type { IAnswer } from "@/interfaces/EvaluationSession.interface";
+import { ref } from "vue";
+import type { UUID } from "crypto";
+import type { AnswerDetail, AnswerUpdate } from "@/types/api";
+import { useAnswer } from "@/composables/useAnswer";
 
-const answersService = new AnswersService();
+export const useAnswersStore = defineStore("answer", () => {
+  // State
+  const answers = ref<AnswerDetail[]>([]);
+  const currentAnswer = ref<AnswerDetail | null>(null); // Use this for showing the configuration of a single answer in sidebar or anything (Score/Comments modals) that opens from the answer
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
+  const answerApi = useAnswer();
 
-export const useAnswersStore = defineStore("answers", () => {
-  const questionsStore = useQuestionsStore();
-  const selectedAnswer = ref<IAnswer | null>(null);
-  const isProcessing = ref(false);
+  // Actions
+  const fetchAnswersForQuestion = async (questionId: UUID) => {
+    isLoading.value = true;
+    error.value = null;
 
-  /**
-   * Generates an answer for the specified question.
-   *
-   * @param questionId - The ID of the question for which to generate an answer.
-   * @returns The generated answer.
-   */
-  const generateAnswer = async (questionId: number) => {
-    isProcessing.value = true;
-    try {
-      const answer = await answersService.generateAnswer(questionId);
-      return answer;
-    } finally {
-      isProcessing.value = false;
+    const response = await answerApi.getAnswersForQuestion(questionId);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      answers.value = response.data || [];
     }
+
+    isLoading.value = false;
   };
 
-  /**
-   * Selects an answer by its question ID and configVersion.
-   * This is is used to record the selected answer for further processing (e.g., scoring, commenting).
-   *
-   * @param questionId - The ID of the question.
-   * @param configVersion - The configuration version of the answer.
-   * @returns void
-   */
-  const selectAnswer = async (questionId: number, configVersion: number) => {
-    const question = questionsStore.questions.find((q) => q.id === questionId);
-    selectedAnswer.value = question
-      ? await answersService.findAnswer(question, configVersion)
-      : null;
+  const fetchAnswersForConfiguration = async (configurationId: UUID) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await answerApi.getAnswersForConfiguration(configurationId);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      answers.value = response.data || [];
+    }
+
+    isLoading.value = false;
   };
 
-  /**
-   * Clears the selected answer after processing (e.g., scoring, commenting).
-   * @returns void
-   */
-  const clearSelectedAnswer = () => {
-    selectedAnswer.value = null;
+  const updateAnswerScore = async (questionId: UUID, answerId: UUID, scoreData: AnswerUpdate) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await answerApi.updateAnswerScore(questionId, answerId, scoreData);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      const updatedAnswer = response.data as AnswerDetail;
+      const index = answers.value.findIndex((a) => a.id === answerId);
+      if (index !== -1) {
+        answers.value[index] = updatedAnswer;
+      }
+      if (currentAnswer.value?.id === answerId) {
+        currentAnswer.value = updatedAnswer;
+      }
+    }
+
+    isLoading.value = false;
   };
 
   return {
-    isProcessing,
-    generateAnswer,
-    selectedAnswer,
-    selectAnswer,
-    clearSelectedAnswer
+    // State
+    answers,
+    currentAnswer,
+    isLoading,
+    error,
+    // Actions
+    fetchAnswersForQuestion,
+    fetchAnswersForConfiguration,
+    updateAnswerScore
   };
 });

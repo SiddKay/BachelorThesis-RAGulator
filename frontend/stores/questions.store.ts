@@ -1,133 +1,155 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import QuestionsService from "~/services/questions.service";
-import type { IQuestion } from "@/interfaces/EvaluationSession.interface";
+import type { UUID } from "crypto";
+import type { Question, QuestionDetail, QuestionCreate } from "@/types/api";
+import { useQuestion } from "@/composables/useQuestion";
 
-const questionsService = new QuestionsService();
+export const useQuestionsStore = defineStore("question", () => {
+  // State
+  const basicQuestions = ref<Question[]>([]);
+  const questionDetails = ref<QuestionDetail[]>([]);
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
+  const questionApi = useQuestion();
 
-/**
- * Questions store that manages the state of questions and answers.
- */
-export const useQuestionsStore = defineStore("questions", () => {
-  const questions = ref<IQuestion[]>([]);
-  const isProcessing = ref(false);
+  // Computed
+  const allQuestions = computed(() => {
+    return [...questionDetails.value, ...basicQuestions.value];
+  });
 
-  /**
-   * Fetches questions from the API via the service and updates the store.
-   * @returns void
-   * @throws Error if there is an issue fetching the questions
-   */
-  const fetchQuestions = async () => {
-    isProcessing.value = true;
-    try {
-      questions.value = await questionsService.getQuestions();
-    } finally {
-      isProcessing.value = false;
+  // Actions
+  const fetchQuestions = async (sessionId: UUID) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.getQuestions(sessionId);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      questionDetails.value = response.data || [];
+      // Clear basic questions when loading details
+      basicQuestions.value = [];
     }
+
+    isLoading.value = false;
   };
 
-  /**
-   * Adds new questions locally to the store.
-   * @param newQuestions - The new questions to be added.
-   * @returns void
-   * @throws Error if there is an issue adding the questions
-   */
-  const addQAPair = async (
-    newQuestions: { text: string; expectedAnswers?: string; important: boolean }[]
+  const createQuestion = async (sessionId: UUID, questionData: QuestionCreate) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.createQuestion(sessionId, questionData);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      basicQuestions.value.push(response.data as Question);
+    }
+
+    isLoading.value = false;
+  };
+
+  const createQuestionsBulk = async (sessionId: UUID, questionsData: QuestionCreate[]) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.createQuestionsBulk(sessionId, questionsData);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      basicQuestions.value = [...basicQuestions.value, ...(response.data as Question[])];
+    }
+
+    isLoading.value = false;
+  };
+
+  const updateQuestion = async (
+    sessionId: UUID,
+    questionId: UUID,
+    questionData: Partial<QuestionCreate>
   ) => {
-    isProcessing.value = true;
-    try {
-      await questionsService.addQAPair(newQuestions);
-      questions.value = await questionsService.getQuestions(); // Refresh state
-    } finally {
-      isProcessing.value = false;
-    }
-  };
+    isLoading.value = true;
+    error.value = null;
 
-  const handleFileUpload = async (file: File) => {
-    isProcessing.value = true;
-    try {
-      await questionsService.handleFileUpload(file);
-      questions.value = await questionsService.getQuestions(); // Refresh state
-    } finally {
-      isProcessing.value = false;
-    }
-  };
+    const response = await questionApi.updateQuestion(sessionId, questionId, questionData);
 
-  // TODO: put these methods in a separate annotations store
-  /**
-   * Updates the score of an answer by its question ID and configVersion.
-   * @param questionId - The ID of the question.
-   * @param configVersion - The configuration version of the answer.
-   * @param score - The new score to be set.
-   * @returns void
-   * @throws Error if the question or answer is not found
-   */
-  const updateScore = (questionId: number, configVersion: number, score: number) => {
-    try {
-      const question = questions.value.find((q) => q.id === questionId);
-      if (!question) {
-        console.error(`Question with ID ${questionId} not found`);
-        return;
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      const updatedQuestion = response.data as QuestionDetail;
+      const index = questionDetails.value.findIndex((q) => q.id === questionId);
+      if (index !== -1) {
+        questionDetails.value[index] = updatedQuestion;
       }
-
-      const answer = question.answers.find((a) => a.configVersion === configVersion);
-      if (!answer) {
-        console.error(
-          `Answer with configVersion ${configVersion} not found for question ID ${questionId}`
-        );
-        return;
-      }
-
-      answer.score = score;
-      console.log(
-        `Score updated successfully for answer with configVersion ${configVersion} of question ID ${questionId}`
-      );
-    } catch (error) {
-      console.error("Error updating score:", error);
     }
+
+    isLoading.value = false;
   };
 
-  // TODO: Implement the actual runChain method
-  /**
-   * Simulates running an LCEL chain with a delay.
-   *
-   * @returns void
-   * @throws Error if there is an issue running the chain
-   */
-  const runChain = async () => {
-    isProcessing.value = true;
-    try {
-      // Simulating an API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      questions.value = questions.value.map((q) => ({
-        ...q,
-        answers: [
-          ...q.answers,
-          {
-            id: q.answers.length + 1,
-            questionId: q.id,
-            configVersion: q.answers.length + 1,
-            text: `New answer for: ${q.text}`,
-            comments: [],
-            score: 0
-          }
-        ]
-      }));
-    } catch (error) {
-      console.error("Error running chain:", error);
-    } finally {
-      isProcessing.value = false;
+  const deleteQuestion = async (sessionId: UUID, questionId: UUID) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.deleteQuestion(sessionId, questionId);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      basicQuestions.value = basicQuestions.value.filter((q) => q.id !== questionId);
+      questionDetails.value = questionDetails.value.filter((q) => q.id !== questionId);
     }
+
+    isLoading.value = false;
+  };
+
+  const deleteQuestionsBulk = async (sessionId: UUID, questionIds: UUID[]) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.deleteQuestionsBulk(sessionId, questionIds);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      basicQuestions.value = basicQuestions.value.filter((q) => !questionIds.includes(q.id));
+      questionDetails.value = questionDetails.value.filter((q) => !questionIds.includes(q.id));
+    }
+
+    isLoading.value = false;
+  };
+
+  const deleteAllQuestions = async (sessionId: UUID) => {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await questionApi.deleteAllQuestions(sessionId);
+
+    if (response.error) {
+      error.value = response.error.message;
+    } else {
+      basicQuestions.value = [];
+      questionDetails.value = [];
+    }
+
+    isLoading.value = false;
   };
 
   return {
-    questions,
-    isProcessing,
+    // State
+    allQuestions,
+    basicQuestions,
+    questionDetails,
+    isLoading,
+    error,
+    // Actions
     fetchQuestions,
-    addQAPair,
-    handleFileUpload,
-    updateScore,
-    runChain
+    createQuestion,
+    createQuestionsBulk,
+    updateQuestion,
+    deleteQuestion,
+    deleteQuestionsBulk,
+    deleteAllQuestions
   };
 });
