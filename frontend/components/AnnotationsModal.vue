@@ -59,7 +59,7 @@ const deleteComment = (commentIndex: number) => {
       <DialogHeader>
         <DialogTitle>Annotations</DialogTitle>
         <DialogDescription class="pb-1 text-gray-300">
-          View and add comments for Version {{ selectedAnswer?.configVersion }} of the answer.
+          View and add comments for Version {{ selectedAnswer?.configuration_id }} of the answer.
         </DialogDescription>
       </DialogHeader>
 
@@ -110,3 +110,4 @@ const deleteComment = (commentIndex: number) => {
     </DialogContent>
   </Dialog>
 </template>
+~/stores/answers.store2
