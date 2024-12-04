@@ -2,8 +2,10 @@
 /**----------------------------- Imports ----------------------------------- */
 import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
+import type { QuestionCreate } from "@/types/api";
 import { useQuestionsStore } from "@/stores/questions.store";
 import { useQuestionsModalStore } from "@/stores/toggleOpen.store";
+import { useSessionContext } from "@/composables/useSession";
 
 // Importing UI components
 import {
@@ -17,29 +19,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus } from "lucide-vue-next";
 
 /**----------------------------- Setup ----------------------------------- */
-// Local state
-interface NewQuestion {
-  text: string;
-  expectedAnswer: string;
-  important: boolean;
-}
+
+const { sessionId } = useSessionContext();
 
 const questionsModalStore = useQuestionsModalStore();
 const { isOpen: isModalOpen } = storeToRefs(questionsModalStore);
 
 const questionsStore = useQuestionsStore();
-const { isProcessing } = storeToRefs(questionsStore);
+const { isLoading } = storeToRefs(questionsStore);
 
-const newQuestions = ref<NewQuestion[]>([{ text: "", expectedAnswer: "", important: false }]);
+const newQuestions = ref<QuestionCreate[]>([
+  {
+    question_text: "",
+    expected_answer: ""
+  }
+]);
 const uploadError = ref<string | null>(null);
 
 /**----------------------------- Methods ----------------------------------- */
 const addNewQuestion = () => {
-  newQuestions.value.push({ text: "", expectedAnswer: "", important: false });
+  newQuestions.value.push({
+    question_text: "",
+    expected_answer: ""
+  });
 };
 
 const removeNewQuestion = (index: number) => {
@@ -49,7 +54,7 @@ const removeNewQuestion = (index: number) => {
 };
 
 const saveNewQuestions = async () => {
-  const validNewQuestions = newQuestions.value.filter((q) => q.text.trim() !== "");
+  const validNewQuestions = newQuestions.value.filter((q) => q.question_text.trim() !== "");
 
   if (validNewQuestions.length === 0) {
     uploadError.value = "Please enter at least one question.";
@@ -57,7 +62,7 @@ const saveNewQuestions = async () => {
   }
 
   try {
-    await questionsStore.addQAPair(validNewQuestions);
+    await questionsStore.createQuestionsBulk(sessionId.value, validNewQuestions);
     resetModal();
   } catch (error) {
     uploadError.value = "Failed to save questions. With error: " + error;
@@ -66,27 +71,27 @@ const saveNewQuestions = async () => {
 
 const resetModal = () => {
   questionsModalStore.close();
-  newQuestions.value = [{ text: "", expectedAnswer: "", important: false }];
+  newQuestions.value = [{ question_text: "", expected_answer: "" }];
   uploadError.value = null;
 };
 
 // Handle file upload
-const handleFileUpload = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+// const handleFileUpload = async (event: Event) => {
+//   const file = (event.target as HTMLInputElement).files?.[0];
+//   if (!file) return;
 
-  try {
-    uploadError.value = null;
-    if (file) {
-      await questionsStore.handleFileUpload(file);
-    }
-    resetModal();
-  } catch (error) {
-    uploadError.value = "Failed to upload file: " + error;
-  } finally {
-    (event.target as HTMLInputElement).value = "";
-  }
-};
+//   try {
+//     uploadError.value = null;
+//     if (file) {
+//       await questionsStore.handleFileUpload(file);
+//     }
+//     resetModal();
+//   } catch (error) {
+//     uploadError.value = "Failed to upload file: " + error;
+//   } finally {
+//     (event.target as HTMLInputElement).value = "";
+//   }
+// };
 
 // Reset questions if modal is closed without saving
 watch(isModalOpen, (isOpen) => {
@@ -135,23 +140,21 @@ watch(isModalOpen, (isOpen) => {
               class="flex flex-1 px-1 items-center space-x-2"
             >
               <Input
-                v-model="question.text"
+                v-model="question.question_text"
                 placeholder="Enter question"
                 class="flex-grow placeholder:text-gray-400"
-                :disabled="isProcessing"
+                :disabled="isLoading"
               />
               <Input
-                v-model="question.expectedAnswer"
+                v-model="question.expected_answer"
                 placeholder="Enter expected answer"
                 class="flex-grow placeholder:text-gray-400"
               />
-              <!-- <Checkbox :id="`important-${index}`" v-model="question.important" />
-              <label :for="`important-${index}`">Important</label> -->
               <Button
                 variant="link"
                 size="icon"
                 class="text-gray-300 hover:text-red-400"
-                :disabled="isProcessing || newQuestions.length === 1"
+                :disabled="isLoading || newQuestions.length === 1"
                 @click="removeNewQuestion(index)"
               >
                 <Trash2 class="h-4 w-4 p-0 m-0" />
@@ -163,9 +166,10 @@ watch(isModalOpen, (isOpen) => {
         <!-- Upload questions from a CSV file -->
         <TabsContent value="upload">
           <div class="space-y-4">
-            <!-- TODO: Figure out how to change the default black color of Input button -->
-            <Input type="file" accept=".csv" :disabled="isProcessing" @change="handleFileUpload" />
-            <p class="ml-0.5 text-sm text-gray-300">Upload a CSV file containing questions.</p>
+            <p class="ml-0.5 text-sm text-gray-300">File upload functionality coming soon.</p>
+            <!-- TODO: Add: file upload logic and Figure out how to change the default black color of Input button -->
+            <!-- <Input type="file" accept=".csv" :disabled="isProcessing" @change="handleFileUpload" />
+            <p class="ml-0.5 text-sm text-gray-300">Upload a CSV file containing questions.</p> -->
           </div>
         </TabsContent>
       </Tabs>
@@ -176,7 +180,7 @@ watch(isModalOpen, (isOpen) => {
           <Button
             variant="ghost"
             class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
-            :disabled="isProcessing"
+            :disabled="isLoading"
             @click="addNewQuestion"
           >
             <Plus class="mr-2 h-4 w-4" />Add Question
@@ -185,7 +189,7 @@ watch(isModalOpen, (isOpen) => {
             <Button
               variant="ghost"
               class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
-              :disabled="isProcessing"
+              :disabled="isLoading"
               @click="questionsModalStore.close"
             >
               Cancel
@@ -193,7 +197,7 @@ watch(isModalOpen, (isOpen) => {
             <Button
               variant="secondary"
               class="[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)] border-none select-none touch-none"
-              :disabled="isProcessing"
+              :disabled="isLoading"
               @click="saveNewQuestions"
             >
               Save

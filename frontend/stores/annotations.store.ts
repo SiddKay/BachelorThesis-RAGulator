@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import AnnotationsService from "@/services/annotations.service";
-import { useAnswersStore } from "./answers.store";
+import { useAnswersStore } from "./answers.store2";
 
 const annotationsService = new AnnotationsService();
 
