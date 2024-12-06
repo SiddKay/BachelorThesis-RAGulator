@@ -31,3 +31,4 @@ function createToggleStore(storeId: string) {
 export const useQuestionsModalStore = createToggleStore("questionsModal");
 export const useAnnotationsModalStore = createToggleStore("annotationsModal");
 export const useSidebarToggleStore = createToggleStore("sidebarToggle");
+export const useMorphingGradientBgToggleStore = createToggleStore("morphingGradientBgToggle");

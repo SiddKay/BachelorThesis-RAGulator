@@ -1,9 +1,13 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { useMorphingGradientBgToggleStore } from "@/stores/toggleOpen.store";
+
+const morphingGradientBgToggleStore = useMorphingGradientBgToggleStore();
+</script>
 
 <template>
   <div class="bg-fixed flex flex-col inset-0 bg-slate-950">
     <!-- Morphing Gradient as background -->
-    <MorphingGradient class="bg-fixed inset-0 z-0" />
+    <MorphingGradient v-if="morphingGradientBgToggleStore.isOpen" class="bg-fixed inset-0 z-0" />
 
     <!-- Main Content in the forefront -->
     <main class="flex flex-col flex-1 z-10 overflow-hidden">
