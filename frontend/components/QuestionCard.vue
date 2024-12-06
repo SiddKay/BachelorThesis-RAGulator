@@ -4,6 +4,7 @@ import { useSessionContext } from "@/composables/useSession";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Pencil, Check, Trash2 } from "lucide-vue-next";
 
 import { useQuestionsStore } from "@/stores/questions.store";
@@ -51,20 +52,26 @@ const handleEdit = async () => {
           <span v-else class="text-md font-semibold">{{ props.question.question_text }}</span>
         </div>
         <div class="flex gap-2">
-          <button
-            class="p-1 hover:bg-gray-200 rounded-full transition-colors"
+          <Button
+            size="xs"
+            variant="ghost"
+            class="text-blue-400 hover:glassmorphism hover:border-none transition-colors"
+            aria-label="Edit"
             :title="isEditing ? 'Save' : 'Edit'"
             @click="handleEdit"
           >
-            <component :is="isEditing ? Check : Pencil" class="h-4 w-4" />
-          </button>
-          <button
-            class="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            <component :is="isEditing ? Check : Pencil" class="h-4 w-4"
+          /></Button>
+          <Button
+            size="xs"
+            variant="ghost"
+            class="text-red-400 hover:glassmorphism hover:border-none transition-colors"
+            aria-label="Delete"
             title="Delete"
             @click="handleDelete"
           >
             <Trash2 class="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </CardTitle>
 
