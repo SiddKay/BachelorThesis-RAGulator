@@ -19,4 +19,4 @@ model = ChatOpenAI()
 
 prompt = PromptTemplate.from_template("tell me a joke about {topic}.")
 
-chain = prompt | model | StrOutputParser()
+rag_chain = prompt | model | StrOutputParser()
