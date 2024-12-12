@@ -51,7 +51,7 @@ Before you begin, make sure you have the following installed:
    ```
 
    > This will create a `.env` file from the sample `.env.example` file.
-   > You should modify the values in the `.env` file as needed.
+   > Please modify the values in the `.env` file as needed.
 
 5. Start docker desktop and run the following command to setup the database:
 
@@ -59,15 +59,21 @@ Before you begin, make sure you have the following installed:
    docker-compose up -d
    ```
 
-### Starting the Server
+### Starting the Servers
 
-To start a local server, run the following command in the **backend** directory:
+The overall backend consists of two servers:
+
+- **Main FastAPI server** - This is the main server that serves all the main app endpoints.
+
+- **LangServe server** - This is a separate server that runs the LangServe service to serve the endpoints of the chains in `backend/langserver/chains` directory.
+
+To start both the servers, run the following command in the **backend** directory:
 
 ```bash
-uvicorn main:app --reload
+python main.py
 ```
 
-Check the terminal for the relevant endpoints and to see where the server is running _(most likely at [http://127.0.0.1:8000](http://127.0.0.1:8000))_.
+Check the terminal for the relevant endpoints and to see where the server is running _(most likely at [http://localhost:8000](http://localhost:8000/docs) & [http://localhost:8001](http://localhost:8001/docs) for main app and LangServe, respectively)_.
 
 ## Database admin panel
 
@@ -78,7 +84,3 @@ Since we are using `PostgreSQL` as our database, we can use `adminer` to manage 
 - **Username**: `postgres`
 - **Password**: `postgres`
 - **Database**: `ragulator`
-
-## API Testing
-
-Once the server is running, you can visit [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) in your browser to access the Swagger documentation and test the available endpoints.
