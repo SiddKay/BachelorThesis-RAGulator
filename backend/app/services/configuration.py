@@ -1,18 +1,26 @@
-from typing import List, Type
+from typing import List, Type, Dict, Any
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+import aiohttp
+import os
 
 from app.core.logger import get_logger
 from app.models.session import Session
+from app.models.chain import Chain
 from app.models.configuration import Configuration
 from app.services.base import BaseService
-from app.schemas.configuration import ConfigurationCreate, ConfigurationUpdate
+from app.schemas.configuration import (
+    ConfigurationCreate,
+    ConfigurationUpdate,
+    ConfigSchema,
+)
 from app.services.exceptions import (
     SessionNotFoundError,
     ConfigurationError,
     ConfigurationNotFoundError,
+    ChainNotFoundError,
 )
 
 logger = get_logger(__name__)
@@ -22,6 +30,10 @@ class ConfigurationService(BaseService[Configuration]):
     def __init__(self, model: Type[Configuration], db: AsyncSession):
         super().__init__(model, db)
         self.session_model = Session
+        self.chain_model = Chain
+        self.langserve_base_url = os.getenv(
+            "LANGSERVE_BASE_URL", "http://localhost:8001"
+        )
 
     async def _validate_session(self, session_id: UUID) -> bool:
         """Validate if the queried session exists."""
@@ -65,8 +77,96 @@ class ConfigurationService(BaseService[Configuration]):
             )
             raise ConfigurationError("Failed to validate configuration") from e
 
+    async def _validate_chain(
+        self,
+        *,
+        session_id: UUID,
+        chain_id: UUID,
+    ) -> Chain:
+        """Validate if the chain exists."""
+        try:
+            await self._validate_session(session_id)
+
+            query = select(self.chain_model).where(
+                self.chain_model.id == chain_id
+            )
+            result = await self.db.execute(query)
+            chain = result.scalar_one_or_none()
+            if not chain:
+                raise ChainNotFoundError(
+                    f"Chain with id '{chain_id}' not found"
+                )
+            return chain
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while validating chain: {str(e)}")
+            raise ConfigurationError("Failed to validate chain") from e
+
+    async def _fetch_config_schema(
+        self, chain_file_name: str
+    ) -> Dict[str, Any]:
+        """
+        Fetch configuration schema from LangServe endpoint using aiohttp.
+
+        Args:
+            chain_file_name: Name of the chain file
+
+        Returns:
+            Dict[str, Any]: Configuration schema for the chain
+
+        Raises:
+            ConfigurationError: If fetching schema fails
+        """
+        async with aiohttp.ClientSession() as session:
+            try:
+                url = f"{self.langserve_base_url}/{chain_file_name}/config_schema"
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        raise ConfigurationError(
+                            f"Failed to fetch config schema for the url {url}: {error_text}"
+                        )
+                    return await response.json()
+
+            except aiohttp.ClientError as e:
+                logger.error(
+                    f"Network error while fetching config schema: {str(e)}"
+                )
+                raise ConfigurationError(
+                    f"Failed to connect to LangServe endpoint: {str(e)}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Unexpected error fetching config schema: {str(e)}"
+                )
+                raise ConfigurationError(
+                    f"Unexpected error fetching config schema: {str(e)}"
+                )
+
+    async def get_chain_schema(
+        self, *, session_id: UUID, chain_id: UUID
+    ) -> ConfigSchema:
+        """Fetch configuration schema from LangServe endpoint."""
+        try:
+            chain = await self._validate_chain(
+                session_id=session_id, chain_id=chain_id
+            )
+
+            schema = await self._fetch_config_schema(chain.file_name)
+            return ConfigSchema(config_schema=schema)
+        except (ChainNotFoundError, SessionNotFoundError) as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Failed to fetch the chain config schema: {str(e)}")
+            raise ConfigurationError(
+                f"Failed to fetch config schema for chain {chain.file_name}"
+            )
+
     async def create_configuration(
-        self, *, session_id: UUID, data: ConfigurationCreate
+        self,
+        *,
+        session_id: UUID,
+        chain_id: UUID,
+        data: ConfigurationCreate,
     ) -> Configuration:
         """Create a new configuration within a session."""
         try:
@@ -74,8 +174,12 @@ class ConfigurationService(BaseService[Configuration]):
             await self._validate_session(session_id)
             config_data = data.model_dump(exclude_unset=True)
             config_data["session_id"] = session_id
+            config_data["chain_id"] = chain_id
+
             config = await self.create(obj_data=config_data)
-            logger.info(f"Created configuration in session '{session_id}'")
+            logger.info(
+                f"Created configuration for chain '{chain_id}' in session '{session_id}'"
+            )
             return config
         except SQLAlchemyError as e:
             logger.error(
@@ -83,26 +187,28 @@ class ConfigurationService(BaseService[Configuration]):
             )
             raise ConfigurationError("Failed to create configuration") from e
 
-    async def get_session_configurations(
-        self, session_id: UUID
+    async def get_chain_configurations(
+        self, *, session_id: UUID, chain_id: UUID
     ) -> List[Configuration]:
-        """Get all configurations for a specific session."""
+        """Get all configurations for a chain."""
         try:
             # Validate session first
-            await self._validate_session(session_id)
+            await self._validate_chain(
+                session_id=session_id, chain_id=chain_id
+            )
+
             query = select(self.model).where(
-                self.model.session_id == session_id
+                self.model.session_id == session_id,
+                self.model.chain_id == chain_id,
             )
             result = await self.db.execute(query)
             configs = list(result.scalars().all())
             logger.info(
-                f"Retrieved {len(configs)} configurations for session '{session_id}'"
+                f"Retrieved {len(configs)} configurations for chain '{chain_id}'"
             )
             return configs
         except SQLAlchemyError as e:
-            logger.error(
-                f"Database error while fetching configurations: {str(e)}"
-            )
+            logger.error(f"Failed to fetch configurations: {str(e)}")
             raise ConfigurationError("Failed to fetch configurations") from e
 
     async def get_configuration_by_id(
@@ -114,10 +220,18 @@ class ConfigurationService(BaseService[Configuration]):
         )
 
     async def update_configuration(
-        self, *, session_id: UUID, config_id: UUID, data: ConfigurationUpdate
+        self,
+        *,
+        session_id: UUID,
+        config_id: UUID,
+        chain_id: UUID,
+        data: ConfigurationUpdate,
     ) -> Configuration:
         """Update an existing configuration."""
         try:
+            _ = await self._validate_chain(
+                session_id=session_id, chain_id=chain_id
+            )
             config = await self._validate_session_configuration(
                 session_id=session_id, config_id=config_id
             )

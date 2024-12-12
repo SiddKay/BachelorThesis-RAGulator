@@ -1,4 +1,6 @@
 from typing import List, Type
+import os
+import aiohttp
 from uuid import UUID
 from pathlib import Path
 from sqlalchemy import select
@@ -8,7 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logger import get_logger
 from app.models.session import Session
 from app.models.chain import Chain
+from app.models.question import Question
+from app.models.configuration import Configuration
+from app.models.answer import Answer
+from app.schemas.answer import AnswerCreate
 from app.services.base import BaseService
+from app.services.question import QuestionService
+from app.services.answer import AnswerService
+from app.services.configuration import ConfigurationService
 from app.services.exceptions import (
     ChainError,
     ChainNotFoundError,
@@ -85,13 +94,17 @@ class ChainService(BaseService[Chain]):
             )
             raise ChainError("Failed to fetch existing chains") from e
 
+    def _normalize_chain_name(self, chain_name: str) -> str:
+        """Normalize chain name by removing .py extension if present."""
+        return chain_name[:-3] if chain_name.endswith(".py") else chain_name
+
     async def get_available_chains(self) -> List[str]:
         """Get all available chain files from backend/chains directory."""
         try:
             # Get project root directory by going up from current service file
             service_dir = Path(__file__).resolve().parent
             backend_dir = service_dir.parent.parent
-            chains_dir = backend_dir / "chains"
+            chains_dir = backend_dir / "langserver" / "chains"
 
             logger.info(f"Scanning chains directory: {chains_dir}")
 
@@ -106,7 +119,7 @@ class ChainService(BaseService[Chain]):
                 if f.is_file():
                     # Only return filename relative to chains dir
                     chain_files.append(f.name)
-                    logger.debug(f"Found chain file: {f.name}")
+                    logger.info(f"Found chain file: {f.name}")
 
             logger.info(f"Found {len(chain_files)} chain files")
             return chain_files
@@ -125,6 +138,9 @@ class ChainService(BaseService[Chain]):
             # Verify all files exist in chains directory
             await self._validate_chain_files(file_names)
 
+            # Normalize file names by removing .py extension
+            file_names = [self._normalize_chain_name(f) for f in file_names]
+
             # Get existing chain files for this session
             existing_files = await self._get_existing_chain_files(session_id)
 
@@ -140,7 +156,11 @@ class ChainService(BaseService[Chain]):
                 {"session_id": session_id, "file_name": path}
                 for path in new_files
             ]
+
+            # Create chains and refresh to load relationships
             chains = await self.create_bulk(objects_data=chains_data)
+            for chain in chains:
+                await self.db.refresh(chain)
 
             logger.info(
                 f"Added {len(chains)} new chains to session '{session_id}'. "
@@ -204,3 +224,94 @@ class ChainService(BaseService[Chain]):
                 f"Failed to delete chains for session '{session_id}': {str(e)}"
             )
             raise ChainError("Failed to delete session chains") from e
+
+    async def invoke_chain_batch(
+        self, *, session_id: UUID, chain_id: UUID, config_id: UUID
+    ) -> List[Answer]:
+        """Invoke chain in batch for all questions in session and save answers."""
+        try:
+            # Validate chain exists
+            chain = await self._validate_session_chain(
+                session_id=session_id, chain_id=chain_id
+            )
+
+            # Get all questions for the session
+            question_service = QuestionService(Question, self.db)
+            questions = await question_service.get_session_questions(
+                session_id
+            )
+
+            if not questions:
+                logger.warning(
+                    f"No questions found for session '{session_id}'"
+                )
+                return []
+
+            # Get configuration
+            configuration_service = ConfigurationService(
+                Configuration, self.db
+            )
+            config = await configuration_service.get_configuration_by_id(
+                session_id=session_id, config_id=config_id
+            )
+
+            # Call LangServe batch endpoint
+            question_texts = [q.question_text for q in questions]
+            async with aiohttp.ClientSession() as session:
+                url = f"{os.getenv('LANGSERVE_BASE_URL', 'http://localhost:8001')}/{chain.file_name}/batch"
+
+                payload = {
+                    "inputs": question_texts,
+                    "config": {"configurable": config.config_values},
+                    "kwargs": {},
+                }
+
+                async with session.post(url, json=payload) as response:
+                    if response.status != 200:
+                        raise ChainError(
+                            f"Chain invocation failed: {await response.text()}"
+                        )
+
+                    response_data = await response.json()
+                    # Extract answers from output array
+                    generated_answers = response_data["output"]
+
+                    if not isinstance(generated_answers, list):
+                        raise ChainError(
+                            "Invalid response format from LangServe"
+                        )
+
+                    # Create AnswerCreate objects mapping questions to their answers
+                    answers_data = [
+                        AnswerCreate(
+                            question_id=question.id,
+                            chain_id=chain_id,
+                            configuration_id=config_id,
+                            generated_answer=answer,
+                        )
+                        for question, answer in zip(
+                            questions, generated_answers
+                        )
+                    ]
+
+                    logger.critical(
+                        f"Answers data: {answers_data}"
+                    )  # TODO: Remove this line
+
+                    # Use Answer service to create answers in bulk
+                    answer_service = AnswerService(Answer, self.db)
+                    answers = await answer_service.create_bulk(
+                        objects_data=[
+                            answer.model_dump() for answer in answers_data
+                        ]
+                    )
+
+                    logger.info(
+                        f"Created {len(answers)} answers for {len(questions)} questions "
+                        f"using chain '{chain_id}' and configuration '{config_id}'"
+                    )
+                    return answers
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error while invoking chain: {str(e)}")
+            raise ChainError("Failed to invoke chain") from e

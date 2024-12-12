@@ -1,5 +1,7 @@
 from typing import List
+from pydantic import Field
 from app.schemas.base import BaseSchema, TimeStampSchema, IdSchema
+from app.schemas.configuration import Configuration
 
 
 class ChainBase(BaseSchema):
@@ -7,7 +9,7 @@ class ChainBase(BaseSchema):
 
 
 class Chain(ChainBase, TimeStampSchema, IdSchema):
-    pass
+    configurations: List[Configuration] = Field(default_factory=list)
 
 
 class AvailableChain(BaseSchema):

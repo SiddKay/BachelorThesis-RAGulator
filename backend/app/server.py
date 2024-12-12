@@ -1,15 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# from langserve import add_routes
 from contextlib import asynccontextmanager
+from app.models import Base
 from app.db.config import async_engine
 from app.api.v1.endpoints import api_router
-from app.models import Base
-
 from app.core.logger import setup_logging, get_logger
-
-# from chains.simple_chain import chain
 
 
 logger = get_logger("ragulator_logger")
@@ -22,9 +17,9 @@ async def lifespan(app: FastAPI):
     # Setup logging
     setup_logging(log_file="logs/ragulator_log")
 
-    logger.info("Starting database initialization...")
+    logger.info("Starting application initialization...")
     try:
-        # Create tables on startup
+        # Initialize database
         async with async_engine.begin() as conn:
             logger.info("Creating database tables...")
             await conn.run_sync(Base.metadata.create_all)
@@ -48,10 +43,10 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    """Create and configure the main FastAPI application."""
     app = FastAPI(
-        title="Sample App to test LangServe",
+        title="RAGulator API",
         version="0.0.1",
-        description="This app acts as a server for LangServe",
         lifespan=lifespan,
     )
 
