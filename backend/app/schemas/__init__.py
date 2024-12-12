@@ -15,6 +15,7 @@ from app.schemas.question import (
     QuestionDetail,
 )
 from app.schemas.configuration import (
+    ConfigSchema,
     Configuration,
     ConfigurationBase,
     ConfigurationCreate,
@@ -51,6 +52,7 @@ __all__ = [
     "QuestionUpdate",
     "QuestionDetail",
     # Configuration schemas
+    "ConfigSchema",
     "Configuration",
     "ConfigurationBase",
     "ConfigurationCreate",

@@ -3,7 +3,6 @@ from typing import Optional, List
 from app.schemas.base import BaseSchema, TimeStampSchema, IdSchema
 from app.schemas.chain import Chain
 from app.schemas.question import QuestionDetail
-from app.schemas.configuration import Configuration
 
 
 class SessionBase(BaseSchema):
@@ -27,4 +26,3 @@ class Session(SessionBase, TimeStampSchema, IdSchema):
 class SessionDetail(Session):
     chains: List[Chain] = []
     questions: List[QuestionDetail] = []
-    configurations: List[Configuration] = []

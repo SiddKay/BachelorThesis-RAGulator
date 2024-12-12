@@ -10,12 +10,14 @@ from app.schemas.chain import (
     AvailableChain,
     ChainSelection,
 )
+from app.schemas.answer import Answer as AnswerSchema
 from app.api.deps import get_db_session
 from app.services.chain import ChainService
 from app.services.exceptions import (
     ChainError,
     ChainNotFoundError,
     SessionNotFoundError,
+    ConfigurationNotFoundError,
 )
 
 router = APIRouter(tags=["chains"])
@@ -73,8 +75,49 @@ async def select_chains(
             session_id=session_id,
             file_names=selection.file_names,
         )
-        return [ChainSchema.model_validate(chain) for chain in chains]
+        return [
+            ChainSchema.model_validate(chain, from_attributes=True)
+            for chain in chains
+        ]
     except SessionNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except ChainError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/sessions/{session_id}/chains/{chain_id}/configuration/{config_id}/invoke",
+    response_model=List[AnswerSchema],
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Chain invoked successfully"},
+        404: {"description": "Chain or configuration not found"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def invoke_chain(
+    session_id: UUID,
+    chain_id: UUID,
+    config_id: UUID,
+    service: ChainService = Depends(get_session_service),
+) -> List[AnswerSchema]:
+    """Invoke chain with configuration for all session questions."""
+    try:
+        answers = await service.invoke_chain_batch(
+            session_id=session_id, chain_id=chain_id, config_id=config_id
+        )
+        return [AnswerSchema.model_validate(answer) for answer in answers]
+    except (
+        SessionNotFoundError,
+        ChainNotFoundError,
+        ConfigurationNotFoundError,
+    ) as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),

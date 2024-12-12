@@ -5,7 +5,7 @@ from sqlalchemy import String, ForeignKey
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models import Session, Answer
+    from app.models import Session, Answer, Configuration
 
 
 class Chain(BaseModel):
@@ -21,5 +21,8 @@ class Chain(BaseModel):
     # Relationships
     session: Mapped["Session"] = relationship(back_populates="chains")
     answers: Mapped[List["Answer"]] = relationship(
+        back_populates="chain", cascade="all, delete-orphan", lazy="selectin"
+    )
+    configurations: Mapped[List["Configuration"]] = relationship(
         back_populates="chain", cascade="all, delete-orphan", lazy="selectin"
     )

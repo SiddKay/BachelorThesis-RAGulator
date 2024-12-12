@@ -5,7 +5,7 @@ from datetime import datetime
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models import Chain, Question, Configuration
+    from app.models import Chain, Question
 
 
 class Session(BaseModel):
@@ -28,8 +28,5 @@ class Session(BaseModel):
         back_populates="session", cascade="all, delete-orphan", lazy="selectin"
     )
     questions: Mapped[List["Question"]] = relationship(
-        back_populates="session", cascade="all, delete-orphan", lazy="selectin"
-    )
-    configurations: Mapped[List["Configuration"]] = relationship(
         back_populates="session", cascade="all, delete-orphan", lazy="selectin"
     )
