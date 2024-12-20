@@ -1,8 +1,21 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { UUID } from "crypto";
+import Papa from "papaparse";
 import type { Question, QuestionDetail, QuestionCreate } from "@/types/api";
 import { useQuestion } from "@/composables/useQuestion";
+
+interface ParseResult {
+  data: QuestionRow[];
+  errors: Array<{ message: string }>;
+  meta: {
+    fields: string[];
+  };
+}
+interface QuestionRow {
+  Question: string;
+  "Expected Answer": string;
+}
 
 export const useQuestionsStore = defineStore("question", () => {
   // State
@@ -72,6 +85,49 @@ export const useQuestionsStore = defineStore("question", () => {
     isLoading.value = false;
   };
 
+  const handleFileUpload = async (file: File): Promise<QuestionCreate[]> => {
+    if (!file || !(file instanceof File)) {
+      throw new Error("Invalid file input");
+    }
+
+    if (!file.name.endsWith(".csv")) {
+      throw new Error("Please upload a CSV file");
+    }
+
+    try {
+      const result = await new Promise<ParseResult>((resolve, reject) => {
+        Papa.parse<QuestionRow>(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results as ParseResult),
+          error: reject
+        });
+      });
+
+      const headers = Object.keys(result.data[0] || {});
+      if (!headers.includes("Question") || !headers.includes("Expected Answer")) {
+        throw new Error('CSV must have "Question" and "Expected Answer" columns');
+      }
+
+      const questions = result.data
+        .map((row: QuestionRow) => ({
+          question_text: row["Question"]?.trim() || "",
+          expected_answer: row["Expected Answer"]?.trim() || ""
+        }))
+        .filter((q: QuestionCreate) => q.question_text);
+
+      if (questions.length === 0) {
+        throw new Error("No valid questions found in the CSV file");
+      }
+
+      return questions;
+    } catch (error) {
+      throw new Error(
+        `File processing failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  };
+
   const updateQuestion = async (
     sessionId: UUID,
     questionId: UUID,
@@ -86,9 +142,17 @@ export const useQuestionsStore = defineStore("question", () => {
       error.value = response.error.message;
     } else {
       const updatedQuestion = response.data as QuestionDetail;
-      const index = questionDetails.value.findIndex((q) => q.id === questionId);
-      if (index !== -1) {
-        questionDetails.value[index] = updatedQuestion;
+
+      // Check and update in questionDetails
+      const detailsIndex = questionDetails.value.findIndex((q) => q.id === questionId);
+      if (detailsIndex !== -1) {
+        questionDetails.value[detailsIndex] = updatedQuestion;
+      }
+
+      // Check and update in basicQuestions
+      const basicIndex = basicQuestions.value.findIndex((q) => q.id === questionId);
+      if (basicIndex !== -1) {
+        basicQuestions.value[basicIndex] = updatedQuestion;
       }
     }
 
@@ -154,6 +218,7 @@ export const useQuestionsStore = defineStore("question", () => {
     fetchQuestions,
     createQuestion,
     createQuestionsBulk,
+    handleFileUpload,
     updateQuestion,
     deleteQuestion,
     deleteQuestionsBulk,

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus } from "lucide-vue-next";
 
 /**----------------------------- Setup ----------------------------------- */
@@ -38,6 +37,9 @@ const newQuestions = ref<QuestionCreate[]>([
   }
 ]);
 const uploadError = ref<string | null>(null);
+
+const activeTab = ref("manual");
+const fileInput = ref<HTMLInputElement | null>(null);
 
 /**----------------------------- Methods ----------------------------------- */
 const addNewQuestion = () => {
@@ -76,22 +78,21 @@ const resetModal = () => {
 };
 
 // Handle file upload
-// const handleFileUpload = async (event: Event) => {
-//   const file = (event.target as HTMLInputElement).files?.[0];
-//   if (!file) return;
+const handleFileUpload = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
 
-//   try {
-//     uploadError.value = null;
-//     if (file) {
-//       await questionsStore.handleFileUpload(file);
-//     }
-//     resetModal();
-//   } catch (error) {
-//     uploadError.value = "Failed to upload file: " + error;
-//   } finally {
-//     (event.target as HTMLInputElement).value = "";
-//   }
-// };
+  try {
+    uploadError.value = null;
+    const parsedQuestions = await questionsStore.handleFileUpload(file);
+    newQuestions.value = parsedQuestions;
+    activeTab.value = "manual";
+  } catch (error) {
+    uploadError.value = error as string;
+  } finally {
+    if (fileInput.value) fileInput.value.value = "";
+  }
+};
 
 // Reset questions if modal is closed without saving
 watch(isModalOpen, (isOpen) => {
@@ -101,12 +102,13 @@ watch(isModalOpen, (isOpen) => {
 
 <template>
   <Dialog :open="isModalOpen" @update:open="questionsModalStore.close">
-    <DialogContent class="glassmorphism-modal sm:max-w-[60vw] max-h-[80vh] flex flex-col">
+    <DialogContent class="glassmorphism-modal sm:max-w-[50vw] max-h-[80vh] flex flex-col">
       <!-- Modal Header -->
       <DialogHeader>
-        <DialogTitle>Add Questions</DialogTitle>
+        <DialogTitle>Add Questions Manually</DialogTitle>
         <DialogDescription class="text-gray-300">
-          Add new questions manually or upload a CSV file.
+          Add new questions manually or upload a CSV file with "Question" and "Expected Answer"
+          columns.
         </DialogDescription>
       </DialogHeader>
 
@@ -115,76 +117,67 @@ watch(isModalOpen, (isOpen) => {
         {{ uploadError }}
       </div>
 
-      <!-- Different upload modes -->
-      <Tabs default-value="manual" class="w-full">
-        <TabsList class="grid w-full grid-cols-2 glassmorphism border-none">
-          <TabsTrigger
-            value="manual"
-            class="text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_60%)] data-[state=active]:[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)]"
-            >Manual</TabsTrigger
+      <!-- Questions list -->
+      <div class="max-h-[30vh] overflow-hidden">
+        <div class="space-y-4 py-2 max-h-[28vh] overflow-y-auto">
+          <div
+            v-for="(question, index) in newQuestions"
+            :key="index"
+            class="flex flex-1 px-1 items-center space-x-2"
           >
-          <TabsTrigger
-            value="upload"
-            class="text-white [text-shadow:_0_1px_2px_rgb(0_0_0_/_60%)] data-[state=active]:[text-shadow:_0_1px_1px_rgb(0_0_0_/_0%)]"
-            >Upload CSV</TabsTrigger
-          >
-        </TabsList>
-
-        <!-- Manual question entry -->
-        <TabsContent value="manual" class="max-h-[30vh] overflow-hidden">
-          <div class="space-y-4 py-2 max-h-[28vh] overflow-y-auto">
-            <!-- Individual Question-Answer Input -->
-            <div
-              v-for="(question, index) in newQuestions"
-              :key="index"
-              class="flex flex-1 px-1 items-center space-x-2"
+            <Input
+              v-model="question.question_text"
+              placeholder="Enter question"
+              class="flex-grow placeholder:text-gray-400"
+              :disabled="isLoading"
+            />
+            <Input
+              v-model="question.expected_answer"
+              placeholder="Enter expected answer"
+              class="flex-grow placeholder:text-gray-400"
+            />
+            <Button
+              variant="link"
+              size="icon"
+              class="text-gray-300 hover:text-red-400"
+              :disabled="isLoading || newQuestions.length === 1"
+              @click="removeNewQuestion(index)"
             >
-              <Input
-                v-model="question.question_text"
-                placeholder="Enter question"
-                class="flex-grow placeholder:text-gray-400"
-                :disabled="isLoading"
-              />
-              <Input
-                v-model="question.expected_answer"
-                placeholder="Enter expected answer"
-                class="flex-grow placeholder:text-gray-400"
-              />
-              <Button
-                variant="link"
-                size="icon"
-                class="text-gray-300 hover:text-red-400"
-                :disabled="isLoading || newQuestions.length === 1"
-                @click="removeNewQuestion(index)"
-              >
-                <Trash2 class="h-4 w-4 p-0 m-0" />
-              </Button>
-            </div>
+              <Trash2 class="h-4 w-4 p-0 m-0" />
+            </Button>
           </div>
-        </TabsContent>
-
-        <!-- Upload questions from a CSV file -->
-        <TabsContent value="upload">
-          <div class="space-y-4">
-            <p class="ml-0.5 text-sm text-gray-300">File upload functionality coming soon.</p>
-            <!-- TODO: Add: file upload logic and Figure out how to change the default black color of Input button -->
-            <!-- <Input type="file" accept=".csv" :disabled="isProcessing" @change="handleFileUpload" />
-            <p class="ml-0.5 text-sm text-gray-300">Upload a CSV file containing questions.</p> -->
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       <!-- Modal footer -->
       <DialogFooter>
         <div class="flex justify-between w-full">
-          <Button
-            variant="ghost"
-            class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
-            :disabled="isLoading"
-            @click="addNewQuestion"
-          >
-            <Plus class="mr-2 h-4 w-4" />Add Question
-          </Button>
+          <div class="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+              :disabled="isLoading"
+              @click="addNewQuestion"
+            >
+              <Plus class="mr-2 h-4 w-4" />Add Question
+            </Button>
+            <span class="mx-2 text-gray-400">or</span>
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".csv"
+              class="hidden"
+              @change="handleFileUpload"
+            >
+            <Button
+              variant="ghost"
+              class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] hover:glassmorphism hover:border-none select-none touch-none"
+              :disabled="isLoading"
+              @click="fileInput?.click()"
+            >
+              Import CSV
+            </Button>
+          </div>
           <div class="flex space-x-2">
             <Button
               variant="ghost"
