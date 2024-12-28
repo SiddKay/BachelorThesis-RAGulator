@@ -3,13 +3,13 @@ import { useAttrs, ref, onUnmounted } from "vue";
 import {
   useQuestionsModalStore,
   useSidebarToggleStore,
-  useMorphingGradientBgToggleStore
+  useMorphingGradientBgToggleStore,
+  useCreateSessionModalStore
 } from "@/stores/toggleOpen.store";
 import { useSessionStore } from "@/stores/sessions.store";
 import { Button } from "@/components/ui/button";
 import { Plus, PanelRightClose, PanelLeftClose } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
-
 const attrs = useAttrs();
 const route = useRoute();
 const router = useRouter();
@@ -19,6 +19,7 @@ const sessionStore = useSessionStore();
 const questionsModalStore = useQuestionsModalStore();
 const sidebarToggleStore = useSidebarToggleStore();
 const morphingGradientBgToggleStore = useMorphingGradientBgToggleStore();
+const createSessionModalStore = useCreateSessionModalStore();
 
 // Toggle handlers
 const toggleSidebar = () => {
@@ -138,20 +139,35 @@ onUnmounted(() => {
 
     <!-- Right: Navigation Buttons -->
     <div class="w-1/3 flex justify-end">
-      <div v-if="isEvaluationScreen" class="flex items-center space-x-2">
-        <!-- Toggle MorphingGradient BG -->
+      <!-- Toggle MorphingGradient BG -->
+      <Button
+        v-if="morphingGradientBgToggleStore.isOpen"
+        size="xs"
+        variant="ghost"
+        class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] text-gray-300 hover:glassmorphism hover:border-none"
+        aria-label="dark-mode"
+        title="Dark mode"
+        @click="morphingGradientBgToggleStore.toggle()"
+      >
+        <span v-if="morphingGradientBgToggleStore.isOpen">Dark Theme</span>
+      </Button>
+
+      <!-- Case: Sessions Screen -->
+      <div v-if="isSessionsScreen" class="flex items-center space-x-2">
         <Button
-          v-if="morphingGradientBgToggleStore.isOpen"
           size="xs"
           variant="ghost"
           class="text-sm [text-shadow:_0_1px_1px_rgb(0_0_0_/_10%)] text-gray-300 hover:glassmorphism hover:border-none"
-          aria-label="dark-mode"
-          title="Dark mode"
-          @click="morphingGradientBgToggleStore.toggle()"
+          aria-label="Create Session"
+          title="Create Session"
+          @click="createSessionModalStore.open"
         >
-          <span v-if="morphingGradientBgToggleStore.isOpen">Dark Theme</span>
+          <Plus class="mr-2 h-4 w-4" />New Session
         </Button>
+      </div>
 
+      <!-- Case: Evaluations Screen -->
+      <div v-else-if="isEvaluationScreen" class="flex items-center space-x-2">
         <!-- Add Questions Button -->
         <Button
           size="xs"
@@ -177,11 +193,10 @@ onUnmounted(() => {
           <PanelLeftClose v-else :size="22" />
         </Button>
       </div>
-
-      <!-- TODO: Add functionality to open "Add Sessions" modal -->
     </div>
   </div>
 
   <!-- Modal for adding questions -->
   <AddQuestionsModal />
+  <CreateSessionModal />
 </template>
