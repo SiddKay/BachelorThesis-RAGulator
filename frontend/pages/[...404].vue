@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
     <h1 class="text-4xl font-bold mb-4">404 Not Found</h1>
     <p class="text-lg">This page does not exist.</p>
     <p class="text-lg mb-5">Please check the URL.</p>
-    <RouterLink to="/evaluation">
+    <RouterLink to="/sessions">
       <Button
         size="lg"
         variant="ghost"
