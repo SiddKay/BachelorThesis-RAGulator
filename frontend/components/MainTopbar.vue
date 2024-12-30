@@ -32,7 +32,7 @@ const toggleModal = () => {
 
 // Dynamic content logic
 const isEvaluationScreen = computed(() => route.path.endsWith("/evaluation"));
-const isSessionsScreen = computed(() => route.path === "/sessions");
+const isSessionsScreen = computed(() => route.path === "/sessions" || route.path === "/sessions/");
 
 const screenTitle = computed(() => {
   if (isSessionsScreen.value) return "Sessions";

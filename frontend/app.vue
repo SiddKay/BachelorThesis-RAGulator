@@ -2,6 +2,11 @@
 import { useMorphingGradientBgToggleStore } from "@/stores/toggleOpen.store";
 
 const morphingGradientBgToggleStore = useMorphingGradientBgToggleStore();
+
+const route = useRoute();
+if (route.path === "/") {
+  navigateTo("/sessions");
+}
 </script>
 
 <template>

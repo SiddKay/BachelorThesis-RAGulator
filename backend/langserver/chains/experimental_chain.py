@@ -78,8 +78,8 @@ chain: Runnable = (
 # Example configuration
 chain_configuration = chain.with_config(
     {
-        "search_kwargs_faiss": {"k": 2},  # or {"k": 4}
-        "answer_style": "brief",  # or "elaborate"
-        "generation_max_tokens": 5,  # or 30
+        "search_kwargs_faiss": {"k": 4},
+        "answer_style": "brief_answer",
+        "generation_max_tokens": 30,
     }
 )
