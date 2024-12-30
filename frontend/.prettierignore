@@ -1,0 +1,7 @@
+# Ignore build output and dependencies
+node_modules
+dist
+
+package-lock.json
+pnpm-lock.yaml
+tailwind.config.js
